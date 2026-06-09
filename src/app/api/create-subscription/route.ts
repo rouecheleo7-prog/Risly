@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe, PRICE_IDS } from '@/lib/stripe'
+import { getStripeServer, PRICE_IDS } from '@/lib/stripe'
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,17 +19,17 @@ export async function POST(req: NextRequest) {
     }
 
     // Create or retrieve customer
-    const existingCustomers = await stripe.customers.list({ email, limit: 1 })
+    const existingCustomers = await getStripeServer().customers.list({ email, limit: 1 })
     let customer = existingCustomers.data[0]
 
     if (!customer) {
-      customer = await stripe.customers.create({ name, email })
+      customer = await getStripeServer().customers.create({ name, email })
     }
 
     // Resolve promo code to a promotion_code id if provided
     let promotionCodeId: string | undefined
     if (promoCode && typeof promoCode === 'string' && promoCode.trim()) {
-      const codes = await stripe.promotionCodes.list({ code: promoCode.trim().toUpperCase(), active: true, limit: 1 })
+      const codes = await getStripeServer().promotionCodes.list({ code: promoCode.trim().toUpperCase(), active: true, limit: 1 })
       if (codes.data.length === 0) {
         return NextResponse.json({ error: 'Code promo invalide ou expiré' }, { status: 400 })
       }
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create SetupIntent for payment method collection during trial
-    const subscription = await stripe.subscriptions.create({
+    const subscription = await getStripeServer().subscriptions.create({
       customer: customer.id,
       items: [{ price: priceId }],
       trial_period_days: 3,
