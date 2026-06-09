@@ -4,9 +4,9 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 
 const PRICE_IDS: Record<string, string> = {
-  starter:  process.env.STRIPE_PRICE_STARTER  ?? '',
-  pro:      process.env.STRIPE_PRICE_PRO      ?? '',
-  business: process.env.STRIPE_PRICE_BUSINESS ?? '',
+  starter:  (process.env.STRIPE_PRICE_STARTER  ?? '').trim(),
+  pro:      (process.env.STRIPE_PRICE_PRO      ?? '').trim(),
+  business: (process.env.STRIPE_PRICE_BUSINESS ?? '').trim(),
 }
 
 export async function POST(req: NextRequest) {
