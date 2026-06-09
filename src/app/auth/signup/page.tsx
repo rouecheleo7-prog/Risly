@@ -1,13 +1,10 @@
 'use client'
 
-import { useState, lazy, Suspense } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, ArrowLeft, Check } from 'lucide-react'
 import { LogoFull } from '@/components/Logo'
 import { createClient } from '@/lib/supabase'
-
-const PaymentStep = lazy(() => import('@/components/PaymentStep'))
 
 const PLANS = [
   {
@@ -32,16 +29,13 @@ const PLANS = [
 ]
 
 export default function SignupPage() {
-  const router = useRouter()
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [step, setStep] = useState<1 | 2>(1)
   const [showPassword, setShowPassword] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState('pro')
   const [form, setForm] = useState({ name: '', email: '', password: '' })
-  const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [promoCode, setPromoCode] = useState('')
-  const [promoApplied, setPromoApplied] = useState(false)
 
   const selectedPlanData = PLANS.find(p => p.id === selectedPlan)!
 
@@ -56,7 +50,7 @@ export default function SignupPage() {
     setError(null)
 
     try {
-      // Create Supabase account first
+      // Create Supabase account
       const supabase = createClient()
       const { error: signupError } = await supabase.auth.signUp({
         email: form.email,
@@ -67,23 +61,17 @@ export default function SignupPage() {
         throw new Error(signupError.message)
       }
 
-      // Then create Stripe subscription
+      // Create Stripe Checkout Session
       const res = await fetch('/api/create-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: form.name, email: form.email, plan: selectedPlan, promoCode: promoCode.trim() || undefined }),
       })
       const data = await res.json()
-
       if (!res.ok) throw new Error(data.error ?? 'Erreur serveur')
 
-      if (data.clientSecret) {
-        if (promoCode.trim()) setPromoApplied(true)
-        setClientSecret(data.clientSecret)
-        setStep(3)
-      } else {
-        router.push('/onboarding')
-      }
+      // Redirect to Stripe Checkout
+      window.location.href = data.checkoutUrl
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur inattendue')
     } finally {
@@ -91,7 +79,7 @@ export default function SignupPage() {
     }
   }
 
-  const stepLabels = ['Compte', 'Plan', 'Paiement']
+  const stepLabels = ['Compte', 'Plan']
 
   return (
     <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center px-6 py-12">
@@ -125,7 +113,7 @@ export default function SignupPage() {
                   </div>
                   <span className={`text-xs transition-colors ${active ? 'text-white font-medium' : done ? 'text-emerald-500' : 'text-gray-600'}`}>{label}</span>
                 </div>
-                {i < 2 && <div className={`flex-1 h-px mx-1 transition-colors ${done ? 'bg-emerald-600' : 'bg-white/8'}`} />}
+                {i < 1 && <div className={`flex-1 h-px mx-1 transition-colors ${done ? 'bg-emerald-600' : 'bg-white/8'}`} />}
               </div>
             )
           })}
@@ -193,18 +181,13 @@ export default function SignupPage() {
               {/* Promo code */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Code promo (optionnel)</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={promoCode}
-                    onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoApplied(false) }}
-                    placeholder="ex : RISLY20"
-                    className="flex-1 bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-600 transition-colors uppercase tracking-wider"
-                  />
-                </div>
-                {promoApplied && (
-                  <p className="text-xs text-emerald-500 mt-1.5">✓ Code appliqué — la réduction sera visible au paiement</p>
-                )}
+                <input
+                  type="text"
+                  value={promoCode}
+                  onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                  placeholder="ex : RISLY20"
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-emerald-600 transition-colors uppercase tracking-wider"
+                />
               </div>
 
               {error && (
@@ -219,18 +202,6 @@ export default function SignupPage() {
           </div>
         )}
 
-        {/* Step 3 — Payment */}
-        {step === 3 && clientSecret && (
-          <Suspense fallback={<div className="text-center text-gray-500 py-8">Chargement du paiement...</div>}>
-            <PaymentStep
-              clientSecret={clientSecret}
-              planName={selectedPlanData.name}
-              planPrice={selectedPlanData.price}
-              onSuccess={() => router.push('/onboarding')}
-              onBack={() => setStep(2)}
-            />
-          </Suspense>
-        )}
 
         <p className="text-center text-sm text-gray-600 mt-6">
           Déjà un compte ?{' '}
