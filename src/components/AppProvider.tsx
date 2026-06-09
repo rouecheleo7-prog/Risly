@@ -2,26 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { AppContext, Currency, UserPlan, OnboardingData, Sale, Goal, StockItem, Drop } from '@/lib/store'
-
-const DEMO_SALES: Sale[] = [
-  { id: '1', product: 'Air Jordan 1 Retro High OG', brand: 'Nike / Jordan', buyPrice: 120, customs: 0, shipping: 12, taxes: 0, sellPrice: 210, quantity: 1, date: '2026-06-01', category: 'Sneakers' },
-  { id: '2', product: 'iPhone 14 Pro 256GB', brand: 'Apple', buyPrice: 650, customs: 45, shipping: 18, taxes: 0, sellPrice: 890, quantity: 1, date: '2026-06-03', category: 'Tech' },
-  { id: '3', product: 'Box Logo Tee SS26', brand: 'Supreme', buyPrice: 45, customs: 0, shipping: 8, taxes: 0, sellPrice: 130, quantity: 2, date: '2026-06-05', category: 'Vêtements' },
-  { id: '4', product: 'Yeezy 350 V2 Bone', brand: 'Adidas / Yeezy', buyPrice: 200, customs: 0, shipping: 15, taxes: 0, sellPrice: 320, quantity: 1, date: '2026-06-07', category: 'Sneakers' },
-  { id: '5', product: 'AirPods Pro 2nd Gen', brand: 'Apple', buyPrice: 180, customs: 0, shipping: 10, taxes: 12, sellPrice: 240, quantity: 3, date: '2026-06-08', category: 'Tech' },
-]
-
-const DEMO_STOCK: StockItem[] = [
-  { id: 's1', product: 'Travis Scott x Nike Air Max 1', brand: 'Nike', buyPrice: 280, customs: 35, shipping: 20, taxes: 0, targetSellPrice: 580, quantity: 1, category: 'Sneakers', addedDate: '2026-06-06' },
-  { id: 's2', product: 'MacBook Pro M4 14"', brand: 'Apple', buyPrice: 1450, customs: 90, shipping: 0, taxes: 0, targetSellPrice: 1750, quantity: 1, category: 'Tech', addedDate: '2026-06-07' },
-  { id: 's3', product: 'Palace Tri-Ferg Hoodie', brand: 'Palace', buyPrice: 95, customs: 0, shipping: 12, taxes: 0, targetSellPrice: 220, quantity: 2, category: 'Vêtements', addedDate: '2026-06-08' },
-]
-
-const DEMO_GOALS: Goal[] = [
-  { id: '1', label: 'Bénéfice mensuel', target: 2000, current: 1240, unit: 'devise', deadline: '2026-06-30' },
-  { id: '2', label: 'Nombre de ventes', target: 30, current: 9, unit: 'ventes', deadline: '2026-06-30' },
-  { id: '3', label: "Chiffre d'affaires", target: 5000, current: 2940, unit: 'devise', deadline: '2026-06-30' },
-]
+import { createClient } from '@/lib/supabase'
 
 const DEMO_DROPS: Drop[] = [
   { id: 'd1', title: 'Jordan 4 "Military Blue" Restock', date: '2026-06-14', type: 'achat', note: 'SNKRS 10h00 CET' },
@@ -30,72 +11,190 @@ const DEMO_DROPS: Drop[] = [
   { id: 'd4', title: 'Yeezy 700 Wave Runner', date: '2026-06-22', type: 'achat', note: 'Adidas CONFIRMED' },
 ]
 
+function toSale(row: Record<string, unknown>): Sale {
+  return {
+    id: row.id as string,
+    product: row.product as string,
+    brand: (row.brand as string) ?? '',
+    buyPrice: Number(row.buy_price),
+    customs: Number(row.customs),
+    shipping: Number(row.shipping),
+    taxes: Number(row.taxes),
+    sellPrice: Number(row.sell_price),
+    quantity: Number(row.quantity),
+    date: row.date as string,
+    category: (row.category as string) ?? '',
+  }
+}
+
+function toStock(row: Record<string, unknown>): StockItem {
+  return {
+    id: row.id as string,
+    product: row.product as string,
+    brand: (row.brand as string) ?? '',
+    buyPrice: Number(row.buy_price),
+    customs: Number(row.customs),
+    shipping: Number(row.shipping),
+    taxes: Number(row.taxes),
+    targetSellPrice: Number(row.target_sell_price),
+    quantity: Number(row.quantity),
+    category: (row.category as string) ?? '',
+    addedDate: row.added_date as string,
+  }
+}
+
+function toGoal(row: Record<string, unknown>): Goal {
+  return {
+    id: row.id as string,
+    label: row.label as string,
+    target: Number(row.target),
+    current: Number(row.current_amount),
+    unit: (row.unit as string) ?? 'devise',
+    deadline: (row.deadline as string) ?? '',
+  }
+}
+
 export default function AppProvider({ children }: { children: React.ReactNode }) {
   const [currency, setCurrencyState] = useState<Currency>('CHF')
   const [userPlan, setUserPlan] = useState<UserPlan>('pro')
   const [onboarding, setOnboarding] = useState<OnboardingData | null>(null)
-
-  useEffect(() => {
-    try {
-      const s = localStorage.getItem('risly_onboarding')
-      if (s) {
-        const data = JSON.parse(s)
-        setOnboarding(data)
-        if (data.currency) setCurrencyState(data.currency)
-      }
-    } catch {}
-  }, [])
   const [marginAlertThreshold, setMarginAlertThreshold] = useState(10)
-  const [sales, setSales] = useState<Sale[]>(DEMO_SALES)
-  const [goals, setGoals] = useState<Goal[]>(DEMO_GOALS)
-  const [stock, setStock] = useState<StockItem[]>(DEMO_STOCK)
+  const [sales, setSales] = useState<Sale[]>([])
+  const [goals, setGoals] = useState<Goal[]>([])
+  const [stock, setStock] = useState<StockItem[]>([])
   const [drops, setDrops] = useState<Drop[]>(DEMO_DROPS)
+  const [userId, setUserId] = useState<string | null>(null)
+
+  // Load user + data on mount
+  useEffect(() => {
+    const supabase = createClient()
+
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      setUserId(user.id)
+
+      const [salesRes, stockRes, goalsRes] = await Promise.all([
+        supabase.from('ventes').select('*').eq('user_id', user.id).order('date', { ascending: false }),
+        supabase.from('stock').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase.from('objectifs').select('*').eq('user_id', user.id),
+      ])
+
+      if (salesRes.data) setSales(salesRes.data.map(toSale))
+      if (stockRes.data) setStock(stockRes.data.map(toStock))
+      if (goalsRes.data) setGoals(goalsRes.data.map(toGoal))
+
+      try {
+        const s = localStorage.getItem('risly_onboarding')
+        if (s) {
+          const data = JSON.parse(s)
+          setOnboarding(data)
+          if (data.currency) setCurrencyState(data.currency)
+        }
+      } catch {}
+    }
+
+    load()
+  }, [])
 
   const setCurrency = useCallback((c: Currency) => setCurrencyState(c), [])
   const setUserPlanCb = useCallback((p: UserPlan) => setUserPlan(p), [])
 
-  const addSale = useCallback((s: Omit<Sale, 'id'>) => {
-    setSales(prev => [{ ...s, id: crypto.randomUUID() }, ...prev])
-  }, [])
-  const updateSale = useCallback((id: string, data: Partial<Sale>) => {
+  const addSale = useCallback(async (s: Omit<Sale, 'id'>) => {
+    if (!userId) return
+    const supabase = createClient()
+    const { data } = await supabase.from('ventes').insert({
+      user_id: userId,
+      product: s.product, brand: s.brand,
+      buy_price: s.buyPrice, customs: s.customs, shipping: s.shipping, taxes: s.taxes,
+      sell_price: s.sellPrice, quantity: s.quantity, date: s.date, category: s.category,
+    }).select().single()
+    if (data) setSales(prev => [toSale(data), ...prev])
+  }, [userId])
+
+  const updateSale = useCallback(async (id: string, data: Partial<Sale>) => {
+    const supabase = createClient()
+    await supabase.from('ventes').update({
+      product: data.product, brand: data.brand,
+      buy_price: data.buyPrice, customs: data.customs, shipping: data.shipping, taxes: data.taxes,
+      sell_price: data.sellPrice, quantity: data.quantity, date: data.date, category: data.category,
+    }).eq('id', id)
     setSales(prev => prev.map(s => s.id === id ? { ...s, ...data } : s))
   }, [])
-  const deleteSale = useCallback((id: string) => {
+
+  const deleteSale = useCallback(async (id: string) => {
+    const supabase = createClient()
+    await supabase.from('ventes').delete().eq('id', id)
     setSales(prev => prev.filter(s => s.id !== id))
   }, [])
 
-  const addGoal = useCallback((g: Omit<Goal, 'id'>) => {
-    setGoals(prev => [...prev, { ...g, id: crypto.randomUUID() }])
-  }, [])
-  const updateGoal = useCallback((id: string, data: Partial<Goal>) => {
+  const addGoal = useCallback(async (g: Omit<Goal, 'id'>) => {
+    if (!userId) return
+    const supabase = createClient()
+    const { data } = await supabase.from('objectifs').insert({
+      user_id: userId,
+      label: g.label, target: g.target, current_amount: g.current, unit: g.unit, deadline: g.deadline || null,
+    }).select().single()
+    if (data) setGoals(prev => [...prev, toGoal(data)])
+  }, [userId])
+
+  const updateGoal = useCallback(async (id: string, data: Partial<Goal>) => {
+    const supabase = createClient()
+    await supabase.from('objectifs').update({
+      label: data.label, target: data.target, current_amount: data.current, unit: data.unit, deadline: data.deadline || null,
+    }).eq('id', id)
     setGoals(prev => prev.map(g => g.id === id ? { ...g, ...data } : g))
   }, [])
-  const deleteGoal = useCallback((id: string) => {
+
+  const deleteGoal = useCallback(async (id: string) => {
+    const supabase = createClient()
+    await supabase.from('objectifs').delete().eq('id', id)
     setGoals(prev => prev.filter(g => g.id !== id))
   }, [])
 
-  const addStockItem = useCallback((s: Omit<StockItem, 'id'>) => {
-    setStock(prev => [{ ...s, id: crypto.randomUUID() }, ...prev])
-  }, [])
-  const updateStockItem = useCallback((id: string, data: Partial<StockItem>) => {
+  const addStockItem = useCallback(async (s: Omit<StockItem, 'id'>) => {
+    if (!userId) return
+    const supabase = createClient()
+    const { data } = await supabase.from('stock').insert({
+      user_id: userId,
+      product: s.product, brand: s.brand,
+      buy_price: s.buyPrice, customs: s.customs, shipping: s.shipping, taxes: s.taxes,
+      target_sell_price: s.targetSellPrice, quantity: s.quantity, category: s.category, added_date: s.addedDate,
+    }).select().single()
+    if (data) setStock(prev => [toStock(data), ...prev])
+  }, [userId])
+
+  const updateStockItem = useCallback(async (id: string, data: Partial<StockItem>) => {
+    const supabase = createClient()
+    await supabase.from('stock').update({
+      product: data.product, brand: data.brand,
+      buy_price: data.buyPrice, customs: data.customs, shipping: data.shipping, taxes: data.taxes,
+      target_sell_price: data.targetSellPrice, quantity: data.quantity, category: data.category, added_date: data.addedDate,
+    }).eq('id', id)
     setStock(prev => prev.map(s => s.id === id ? { ...s, ...data } : s))
   }, [])
-  const deleteStockItem = useCallback((id: string) => {
+
+  const deleteStockItem = useCallback(async (id: string) => {
+    const supabase = createClient()
+    await supabase.from('stock').delete().eq('id', id)
     setStock(prev => prev.filter(s => s.id !== id))
   }, [])
-  const convertStockToSale = useCallback((stockId: string, sellPrice: number, date: string) => {
-    setStock(prev => {
-      const item = prev.find(s => s.id === stockId)
-      if (!item) return prev
-      setSales(sales => [{
-        id: crypto.randomUUID(),
-        product: item.product, brand: item.brand,
-        buyPrice: item.buyPrice, customs: item.customs, shipping: item.shipping, taxes: item.taxes,
-        sellPrice, quantity: item.quantity, date, category: item.category,
-      }, ...sales])
-      return prev.filter(s => s.id !== stockId)
-    })
-  }, [])
+
+  const convertStockToSale = useCallback(async (stockId: string, sellPrice: number, date: string) => {
+    if (!userId) return
+    const item = stock.find(s => s.id === stockId)
+    if (!item) return
+    const supabase = createClient()
+    const { data } = await supabase.from('ventes').insert({
+      user_id: userId,
+      product: item.product, brand: item.brand,
+      buy_price: item.buyPrice, customs: item.customs, shipping: item.shipping, taxes: item.taxes,
+      sell_price: sellPrice, quantity: item.quantity, date, category: item.category,
+    }).select().single()
+    await supabase.from('stock').delete().eq('id', stockId)
+    if (data) setSales(prev => [toSale(data), ...prev])
+    setStock(prev => prev.filter(s => s.id !== stockId))
+  }, [userId, stock])
 
   const addDrop = useCallback((d: Omit<Drop, 'id'>) => {
     setDrops(prev => [...prev, { ...d, id: crypto.randomUUID() }].sort((a, b) => a.date.localeCompare(b.date)))
