@@ -7,7 +7,7 @@ export function getStripeServer(): Stripe {
   if (!_stripe) {
     const key = process.env.STRIPE_SECRET_KEY
     if (!key) throw new Error('STRIPE_SECRET_KEY is not set')
-    _stripe = new Stripe(key, { apiVersion: '2026-05-27.dahlia' })
+    _stripe = new Stripe(key, { apiVersion: '2025-04-30.basil' })
   }
   return _stripe
 }
