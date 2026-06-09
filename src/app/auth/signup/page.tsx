@@ -60,6 +60,8 @@ export default function SignupPage() {
       if (signupError && signupError.message !== 'User already registered') {
         throw new Error(signupError.message)
       }
+      // Sign in immediately so session is active when returning from Stripe
+      await supabase.auth.signInWithPassword({ email: form.email, password: form.password })
 
       // Create Stripe Checkout Session
       const res = await fetch('/api/create-subscription', {
