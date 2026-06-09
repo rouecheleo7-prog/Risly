@@ -5,19 +5,30 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { LogoFull } from '@/components/Logo'
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
 
 export default function LoginPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => {
-      router.push('/dashboard')
-    }, 800)
+    setError('')
+    const supabase = createClient()
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: form.email,
+      password: form.password,
+    })
+    if (authError) {
+      setError('Email ou mot de passe incorrect')
+      setLoading(false)
+      return
+    }
+    router.push('/dashboard')
   }
 
   return (
@@ -66,6 +77,8 @@ export default function LoginPage() {
               <a href="#" className="text-xs text-emerald-500 hover:text-emerald-400 transition-colors">Mot de passe oublié ?</a>
             </div>
           </div>
+
+          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
           <button
             type="submit"

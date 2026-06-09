@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, ArrowLeft, Check } from 'lucide-react'
 import { LogoFull } from '@/components/Logo'
+import { createClient } from '@/lib/supabase'
 
 const PaymentStep = lazy(() => import('@/components/PaymentStep'))
 
@@ -55,6 +56,18 @@ export default function SignupPage() {
     setError(null)
 
     try {
+      // Create Supabase account first
+      const supabase = createClient()
+      const { error: signupError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: { data: { full_name: form.name } },
+      })
+      if (signupError && signupError.message !== 'User already registered') {
+        throw new Error(signupError.message)
+      }
+
+      // Then create Stripe subscription
       const res = await fetch('/api/create-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
