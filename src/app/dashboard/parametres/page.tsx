@@ -1,12 +1,57 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useApp, Currency } from '@/lib/store'
-import { Check, User, Bell, CreditCard, Shield, ChevronRight, AlertTriangle } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
+import { Check, User, Bell, CreditCard, Shield, ChevronRight, AlertTriangle, LogOut } from 'lucide-react'
 
 export default function ParametresPage() {
+  const router = useRouter()
   const { currency, setCurrency, marginAlertThreshold, setMarginAlertThreshold } = useApp()
   const [thresholdInput, setThresholdInput] = useState(String(marginAlertThreshold))
+  const [email, setEmail] = useState('')
+  const [fullName, setFullName] = useState('')
+  const [profileSaved, setProfileSaved] = useState(false)
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwMsg, setPwMsg] = useState('')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setEmail(user.email ?? '')
+        setFullName(user.user_metadata?.full_name ?? '')
+      }
+    })
+  }, [])
+
+  async function saveProfile() {
+    setProfileLoading(true)
+    const supabase = createClient()
+    await supabase.auth.updateUser({ email, data: { full_name: fullName } })
+    setProfileLoading(false)
+    setProfileSaved(true)
+    setTimeout(() => setProfileSaved(false), 2000)
+  }
+
+  async function sendPasswordReset() {
+    setPwLoading(true)
+    const supabase = createClient()
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    })
+    setPwLoading(false)
+    setPwMsg('Email envoyé ! Vérifie ta boîte mail.')
+    setTimeout(() => setPwMsg(''), 4000)
+  }
+
+  async function logout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/auth/login')
+  }
 
   const currencies: { value: Currency; label: string; flag: string; sub: string }[] = [
     { value: 'CHF', label: 'Franc suisse', flag: '🇨🇭', sub: 'CHF · Marché suisse' },
@@ -30,22 +75,29 @@ export default function ParametresPage() {
           <h2 className="text-sm font-semibold">Profil</h2>
         </div>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Prénom</label>
-              <input defaultValue="Jean" className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600/50 transition-colors" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Nom</label>
-              <input defaultValue="Dupont" className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600/50 transition-colors" />
-            </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Nom complet</label>
+            <input
+              value={fullName}
+              onChange={e => setFullName(e.target.value)}
+              className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600/50 transition-colors"
+            />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1.5">Email</label>
-            <input defaultValue="jean@exemple.ch" type="email" className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600/50 transition-colors" />
+            <input
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              type="email"
+              className="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600/50 transition-colors"
+            />
           </div>
-          <button className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-emerald-900/20">
-            Sauvegarder
+          <button
+            onClick={saveProfile}
+            disabled={profileLoading}
+            className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:shadow-emerald-900/20 flex items-center gap-2"
+          >
+            {profileSaved ? <><Check size={14} /> Sauvegardé</> : profileLoading ? 'Sauvegarde...' : 'Sauvegarder'}
           </button>
         </div>
       </section>
@@ -58,7 +110,7 @@ export default function ParametresPage() {
           </div>
           <h2 className="text-sm font-semibold">Devise d&apos;affichage</h2>
         </div>
-        <p className="text-xs text-gray-600 mb-4">Changeable à tout moment. S&apos;applique partout dans l&apos;app. Les montants saisis sont considérés dans la devise sélectionnée.</p>
+        <p className="text-xs text-gray-600 mb-4">Changeable à tout moment. S&apos;applique partout dans l&apos;app.</p>
         <div className="grid grid-cols-2 gap-3">
           {currencies.map(c => (
             <button
@@ -95,9 +147,7 @@ export default function ParametresPage() {
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <input
-              type="range"
-              min="1"
-              max="50"
+              type="range" min="1" max="50"
               value={thresholdInput}
               onChange={e => setThresholdInput(e.target.value)}
               onMouseUp={() => setMarginAlertThreshold(Number(thresholdInput))}
@@ -105,9 +155,7 @@ export default function ParametresPage() {
               className="w-full accent-emerald-500"
             />
             <div className="flex justify-between text-xs text-gray-700 mt-1">
-              <span>1%</span>
-              <span>25%</span>
-              <span>50%</span>
+              <span>1%</span><span>25%</span><span>50%</span>
             </div>
           </div>
           <div className="flex items-center gap-1.5 bg-amber-500/[0.08] border border-amber-500/15 rounded-xl px-4 py-2.5 min-w-[72px] justify-center">
@@ -116,7 +164,7 @@ export default function ParametresPage() {
           </div>
         </div>
         <p className="text-xs text-gray-700 mt-3">
-          Seuil actuel : toute marge en dessous de <span className="text-amber-400 font-semibold">{thresholdInput}%</span> déclenche l&apos;alerte.
+          Toute marge en dessous de <span className="text-amber-400 font-semibold">{thresholdInput}%</span> déclenche l&apos;alerte.
         </p>
       </section>
 
@@ -181,8 +229,24 @@ export default function ParametresPage() {
           </div>
           <h2 className="text-sm font-semibold">Sécurité</h2>
         </div>
-        <button className="flex items-center gap-1.5 text-sm text-emerald-500 hover:text-emerald-400 transition-colors font-medium">
-          Changer de mot de passe <ChevronRight size={13} strokeWidth={2} />
+        <button
+          onClick={sendPasswordReset}
+          disabled={pwLoading}
+          className="flex items-center gap-1.5 text-sm text-emerald-500 hover:text-emerald-400 transition-colors font-medium disabled:opacity-50"
+        >
+          {pwLoading ? 'Envoi...' : 'Changer de mot de passe'} <ChevronRight size={13} strokeWidth={2} />
+        </button>
+        {pwMsg && <p className="text-xs text-emerald-400 mt-2">{pwMsg}</p>}
+      </section>
+
+      {/* Logout */}
+      <section className="glass-dashboard rounded-2xl p-5">
+        <button
+          onClick={logout}
+          className="flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors font-medium"
+        >
+          <LogOut size={14} />
+          Se déconnecter
         </button>
       </section>
 
