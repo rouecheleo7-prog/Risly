@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import PlanGate from '@/components/PlanGate'
 import { Plus, Trash2, Download, FileText, X, ChevronDown } from 'lucide-react'
 import { useApp } from '@/lib/store'
 import { formatCurrency } from '@/lib/utils'
@@ -49,9 +50,29 @@ function newInvoice(num: number): InvoiceData {
 }
 
 export default function FacturesPage() {
+  return (
+    <PlanGate requiredPlan="pro" featureName="Générateur de factures">
+      <FacturesPageContent />
+    </PlanGate>
+  )
+}
+
+function FacturesPageContent() {
   const { sales, currency } = useApp()
   const [invoiceCount, setInvoiceCount] = useState(1)
   const [inv, setInv] = useState<InvoiceData>(() => newInvoice(1))
+
+  useEffect(() => {
+    try {
+      const saved = parseInt(localStorage.getItem('risly_invoice_count') || '1')
+      setInvoiceCount(saved)
+      setInv(newInvoice(saved))
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    try { localStorage.setItem('risly_invoice_count', String(invoiceCount)) } catch {}
+  }, [invoiceCount])
   const [showImport, setShowImport] = useState(false)
   const printRef = useRef<HTMLDivElement>(null)
 
@@ -105,8 +126,9 @@ export default function FacturesPage() {
   function handlePrint() {
     const content = printRef.current
     if (!content) return
-    const w = window.open('', '_blank')
-    if (!w) return
+    const w = window.open('', '_blank') ?? window.open('', '_self')
+    if (!w) { alert('Autorisez les popups pour imprimer la facture.'); return }
+    w.document.open()
     w.document.write(`
       <!DOCTYPE html>
       <html>
@@ -212,7 +234,7 @@ export default function FacturesPage() {
 
           <div class="footer">Généré avec Risly · risly.ch</div>
         </div>
-        <script>window.onload = () => { window.print(); }</script>
+        <script>setTimeout(() => { window.print(); }, 300);</script>
       </body>
       </html>
     `)

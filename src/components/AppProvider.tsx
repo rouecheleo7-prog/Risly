@@ -4,12 +4,6 @@ import { useState, useCallback, useEffect } from 'react'
 import { AppContext, Currency, UserPlan, OnboardingData, Sale, Goal, StockItem, Drop } from '@/lib/store'
 import { createClient } from '@/lib/supabase'
 
-const DEMO_DROPS: Drop[] = [
-  { id: 'd1', title: 'Jordan 4 "Military Blue" Restock', date: '2026-06-14', type: 'achat', note: 'SNKRS 10h00 CET' },
-  { id: 'd2', title: 'Vente iPhone lot × 3', date: '2026-06-15', type: 'vente', note: 'Acheteur confirmé' },
-  { id: 'd3', title: 'Supreme SS26 Drop 4', date: '2026-06-19', type: 'achat', note: 'Box Logo + Jackets' },
-  { id: 'd4', title: 'Yeezy 700 Wave Runner', date: '2026-06-22', type: 'achat', note: 'Adidas CONFIRMED' },
-]
 
 function toSale(row: Record<string, unknown>): Sale {
   return {
@@ -62,7 +56,7 @@ export default function AppProvider({ children }: { children: React.ReactNode })
   const [sales, setSales] = useState<Sale[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
   const [stock, setStock] = useState<StockItem[]>([])
-  const [drops, setDrops] = useState<Drop[]>(DEMO_DROPS)
+  const [drops, setDrops] = useState<Drop[]>([])
   const [userId, setUserId] = useState<string | null>(null)
 
   // Load user + data on mount
@@ -74,15 +68,32 @@ export default function AppProvider({ children }: { children: React.ReactNode })
       if (!user) return
       setUserId(user.id)
 
-      const [salesRes, stockRes, goalsRes] = await Promise.all([
+      // Toi = accès total gratuit
+      const OWNER_EMAIL = 'leoroueche9@gmail.com'
+      if (user.email === OWNER_EMAIL) {
+        setUserPlan('business')
+      } else {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('plan')
+          .eq('id', user.id)
+          .single()
+        if (profile?.plan) setUserPlan(profile.plan as UserPlan)
+      }
+
+      const [salesRes, stockRes, goalsRes, dropsRes] = await Promise.all([
         supabase.from('ventes').select('*').eq('user_id', user.id).order('date', { ascending: false }),
         supabase.from('stock').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
         supabase.from('objectifs').select('*').eq('user_id', user.id),
+        supabase.from('drops').select('*').eq('user_id', user.id).order('date', { ascending: true }),
       ])
 
       if (salesRes.data) setSales(salesRes.data.map(toSale))
       if (stockRes.data) setStock(stockRes.data.map(toStock))
       if (goalsRes.data) setGoals(goalsRes.data.map(toGoal))
+      if (dropsRes.data) setDrops(dropsRes.data.map(r => ({
+        id: r.id, title: r.title, date: r.date, type: r.type, note: r.note ?? ''
+      })))
 
       try {
         const s = localStorage.getItem('risly_onboarding')
@@ -196,13 +207,22 @@ export default function AppProvider({ children }: { children: React.ReactNode })
     setStock(prev => prev.filter(s => s.id !== stockId))
   }, [userId, stock])
 
-  const addDrop = useCallback((d: Omit<Drop, 'id'>) => {
-    setDrops(prev => [...prev, { ...d, id: crypto.randomUUID() }].sort((a, b) => a.date.localeCompare(b.date)))
-  }, [])
-  const updateDrop = useCallback((id: string, data: Partial<Drop>) => {
+  const addDrop = useCallback(async (d: Omit<Drop, 'id'>) => {
+    if (!userId) return
+    const supabase = createClient()
+    const { data } = await supabase.from('drops').insert({
+      user_id: userId, title: d.title, date: d.date, type: d.type, note: d.note
+    }).select().single()
+    if (data) setDrops(prev => [...prev, { id: data.id, title: data.title, date: data.date, type: data.type, note: data.note ?? '' }].sort((a, b) => a.date.localeCompare(b.date)))
+  }, [userId])
+  const updateDrop = useCallback(async (id: string, data: Partial<Drop>) => {
+    const supabase = createClient()
+    await supabase.from('drops').update({ title: data.title, date: data.date, type: data.type, note: data.note }).eq('id', id)
     setDrops(prev => prev.map(d => d.id === id ? { ...d, ...data } : d))
   }, [])
-  const deleteDrop = useCallback((id: string) => {
+  const deleteDrop = useCallback(async (id: string) => {
+    const supabase = createClient()
+    await supabase.from('drops').delete().eq('id', id)
     setDrops(prev => prev.filter(d => d.id !== id))
   }, [])
 

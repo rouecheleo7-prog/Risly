@@ -6,11 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number, currency: 'CHF' | 'EUR'): string {
-  return new Intl.NumberFormat('fr-CH', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(amount)
+  const symbol = currency === 'CHF' ? 'CHF' : '€'
+  return `${symbol} ${amount.toFixed(2)}`
 }
 
 export function formatDate(date: Date): string {

@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase'
 import { Plus, X, Pencil, Trash2, Star, ExternalLink, Search, Globe, User, Package, AlertTriangle } from 'lucide-react'
+import PlanGate from '@/components/PlanGate'
 
 type Status = 'actif' | 'inactif' | 'eviter'
 type Type = 'site' | 'particulier' | 'grossiste' | 'autre'
@@ -66,17 +68,36 @@ const TYPE_ICONS: Record<Type, React.ElementType> = {
 }
 
 export default function FournisseursPage() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([
-    { id: '1', name: 'StockX', type: 'site', country: 'USA', url: 'https://stockx.com', notes: 'Bonne sélection sneakers, frais élevés', rating: 4, status: 'actif', totalSpent: 1240, totalOrders: 8, createdAt: '2026-01-15' },
-    { id: '2', name: 'Vinted Pro', type: 'site', country: 'FR', url: 'https://vinted.fr', notes: 'Tech et vêtements, bons prix', rating: 5, status: 'actif', totalSpent: 680, totalOrders: 14, createdAt: '2026-02-01' },
-    { id: '3', name: 'Mehdi R.', type: 'particulier', country: 'CH', url: '', notes: 'Fournisseur Jordan, fiable mais lent', rating: 3, status: 'inactif', totalSpent: 320, totalOrders: 2, createdAt: '2026-03-10' },
-  ])
+  return (
+    <PlanGate requiredPlan="pro" featureName="Historique fournisseurs">
+      <FournisseursPageContent />
+    </PlanGate>
+  )
+}
+
+function FournisseursPageContent() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Supplier | null>(null)
   const [form, setForm] = useState(empty())
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<Status | 'tous'>('tous')
   const [showDetail, setShowDetail] = useState<Supplier | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      setUserId(user.id)
+      const { data } = await supabase.from('fournisseurs').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+      if (data) setSuppliers(data.map(r => ({
+        id: r.id, name: r.name, type: r.type, country: r.country ?? '', url: r.url ?? '',
+        notes: r.notes ?? '', rating: r.rating, status: r.status,
+        totalSpent: Number(r.total_spent), totalOrders: r.total_orders, createdAt: r.created_at,
+      })))
+    })
+  }, [])
 
   function openAdd() { setEditing(null); setForm(empty()); setShowModal(true) }
   function openEdit(s: Supplier) {
@@ -85,17 +106,32 @@ export default function FournisseursPage() {
     setShowModal(true)
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!userId) return
+    const supabase = createClient()
     if (editing) {
+      await supabase.from('fournisseurs').update({
+        name: form.name, type: form.type, country: form.country, url: form.url,
+        notes: form.notes, rating: form.rating, status: form.status,
+        total_spent: form.totalSpent, total_orders: form.totalOrders,
+      }).eq('id', editing.id)
       setSuppliers(p => p.map(s => s.id === editing.id ? { ...s, ...form } : s))
     } else {
-      setSuppliers(p => [...p, { ...form, id: Date.now().toString(), createdAt: new Date().toISOString().split('T')[0] }])
+      const { data } = await supabase.from('fournisseurs').insert({
+        user_id: userId, name: form.name, type: form.type, country: form.country,
+        url: form.url, notes: form.notes, rating: form.rating, status: form.status,
+        total_spent: form.totalSpent, total_orders: form.totalOrders,
+      }).select().single()
+      if (data) setSuppliers(p => [{ ...form, id: data.id, createdAt: data.created_at }, ...p])
     }
     setShowModal(false)
   }
 
-  function del(id: string) { setSuppliers(p => p.filter(s => s.id !== id)) }
+  async function del(id: string) {
+    await createClient().from('fournisseurs').delete().eq('id', id)
+    setSuppliers(p => p.filter(s => s.id !== id))
+  }
 
   const filtered = suppliers.filter(s => {
     const q = search.toLowerCase()

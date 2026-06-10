@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import PlanGate from '@/components/PlanGate'
+import { createClient } from '@/lib/supabase'
 import { Plus, X, Pencil, Trash2, Search, Phone, AtSign, MessageCircle, Bell, ChevronDown, ChevronUp } from 'lucide-react'
 
 type Status = 'prospect' | 'client' | 'vip' | 'inactif'
@@ -38,11 +40,6 @@ const CONTACT_ICONS: Record<Contact, React.ElementType> = {
   phone: Phone, instagram: AtSign, whatsapp: MessageCircle, autre: Phone,
 }
 
-const DEMO: Client[] = [
-  { id: '1', name: 'Thomas L.', contact: '@thomas_kicks', contactType: 'instagram', status: 'vip', notes: 'Pointure 42, fan Jordan. Achète vite si bonne affaire.', followUpDate: '2026-06-15', totalSpent: 840, purchases: [{ id: 'p1', product: 'Jordan 4 Military Blue', amount: 380, date: '2026-05-10' }, { id: 'p2', product: 'Jordan 1 Chicago', amount: 460, date: '2026-04-22' }], tags: ['sneakers', 'jordan'], createdAt: '2026-03-01' },
-  { id: '2', name: 'Sarah M.', contact: '+41 76 123 45 67', contactType: 'whatsapp', status: 'client', notes: 'Cherche iPhone reconditionné. Budget 400 CHF max.', followUpDate: '2026-06-20', totalSpent: 420, purchases: [{ id: 'p3', product: 'iPhone 13 128GB', amount: 420, date: '2026-05-28' }], tags: ['tech'], createdAt: '2026-04-15' },
-  { id: '3', name: 'Kevin B.', contact: '@kevin_resell', contactType: 'instagram', status: 'prospect', notes: 'Intéressé par les Yeezy. Suit mes stories.', followUpDate: '2026-06-12', totalSpent: 0, purchases: [], tags: ['sneakers', 'yeezy'], createdAt: '2026-06-01' },
-]
 
 const emptyClient = (): Omit<Client, 'id' | 'createdAt'> => ({
   name: '', contact: '', contactType: 'instagram', status: 'prospect',
@@ -50,10 +47,34 @@ const emptyClient = (): Omit<Client, 'id' | 'createdAt'> => ({
 })
 
 export default function CRMPage() {
-  const [clients, setClients] = useState<Client[]>(DEMO)
+  return (
+    <PlanGate requiredPlan="pro" featureName="CRM Clients">
+      <CRMPageContent />
+    </PlanGate>
+  )
+}
+
+function CRMPageContent() {
+  const [clients, setClients] = useState<Client[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Client | null>(null)
   const [form, setForm] = useState(emptyClient())
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      setUserId(user.id)
+      const { data } = await supabase.from('crm_clients').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+      if (data) setClients(data.map(r => ({
+        id: r.id, name: r.name, contact: r.contact ?? '', contactType: r.contact_type,
+        status: r.status, notes: r.notes ?? '', followUpDate: r.follow_up_date ?? '',
+        totalSpent: Number(r.total_spent), purchases: r.purchases ?? [], tags: r.tags ?? [],
+        createdAt: r.created_at,
+      })))
+    })
+  }, [])
   const [tagInput, setTagInput] = useState('')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<Status | 'tous'>('tous')
@@ -69,26 +90,44 @@ export default function CRMPage() {
     setShowModal(true)
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!userId) return
+    const supabase = createClient()
     const tags = tagInput.trim() ? [...form.tags, ...tagInput.split(',').map(t => t.trim()).filter(Boolean)] : form.tags
     if (editing) {
+      await supabase.from('crm_clients').update({
+        name: form.name, contact: form.contact, contact_type: form.contactType,
+        status: form.status, notes: form.notes, follow_up_date: form.followUpDate || null,
+        total_spent: form.totalSpent, purchases: form.purchases, tags,
+      }).eq('id', editing.id)
       setClients(p => p.map(c => c.id === editing.id ? { ...c, ...form, tags } : c))
     } else {
-      setClients(p => [...p, { ...form, tags, id: Date.now().toString(), createdAt: new Date().toISOString().split('T')[0] }])
+      const { data } = await supabase.from('crm_clients').insert({
+        user_id: userId, name: form.name, contact: form.contact, contact_type: form.contactType,
+        status: form.status, notes: form.notes, follow_up_date: form.followUpDate || null,
+        total_spent: 0, purchases: [], tags,
+      }).select().single()
+      if (data) setClients(p => [{
+        id: data.id, name: data.name, contact: data.contact ?? '', contactType: data.contact_type,
+        status: data.status, notes: data.notes ?? '', followUpDate: data.follow_up_date ?? '',
+        totalSpent: 0, purchases: [], tags, createdAt: data.created_at,
+      }, ...p])
     }
     setShowModal(false)
   }
 
-  function addPurchase(clientId: string) {
+  async function addPurchase(clientId: string) {
     if (!newPurchase.product || !newPurchase.amount) return
+    const supabase = createClient()
     const purchase: Purchase = { id: Date.now().toString(), product: newPurchase.product, amount: parseFloat(newPurchase.amount) || 0, date: newPurchase.date }
-    setClients(p => p.map(c => c.id === clientId ? {
-      ...c,
-      purchases: [...c.purchases, purchase],
-      totalSpent: c.totalSpent + purchase.amount,
-      status: c.status === 'prospect' ? 'client' : c.status,
-    } : c))
+    const client = clients.find(c => c.id === clientId)
+    if (!client) return
+    const newPurchases = [...client.purchases, purchase]
+    const newTotal = client.totalSpent + purchase.amount
+    const newStatus = client.status === 'prospect' ? 'client' : client.status
+    await supabase.from('crm_clients').update({ purchases: newPurchases, total_spent: newTotal, status: newStatus }).eq('id', clientId)
+    setClients(p => p.map(c => c.id === clientId ? { ...c, purchases: newPurchases, totalSpent: newTotal, status: newStatus } : c))
     setNewPurchase({ product: '', amount: '', date: new Date().toISOString().split('T')[0] })
     setShowPurchaseForm(null)
   }
@@ -221,7 +260,7 @@ export default function CRMPage() {
                     <button onClick={() => openEdit(client)} className="p-2 rounded-lg hover:bg-white/5 transition-colors" style={{ color: 'var(--text-muted)' }}>
                       <Pencil size={13} />
                     </button>
-                    <button onClick={() => setClients(p => p.filter(c => c.id !== client.id))} className="p-2 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors">
+                    <button onClick={async () => { await createClient().from('crm_clients').delete().eq('id', client.id); setClients(p => p.filter(c => c.id !== client.id)) }} className="p-2 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors">
                       <Trash2 size={13} />
                     </button>
                     {expanded ? <ChevronUp size={13} style={{ color: 'var(--text-muted)' }} /> : <ChevronDown size={13} style={{ color: 'var(--text-muted)' }} />}

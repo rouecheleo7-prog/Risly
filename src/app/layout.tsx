@@ -11,10 +11,15 @@ export const metadata: Metadata = {
   keywords: ['revendeur', 'business', 'ventes', 'bénéfices', 'SaaS', 'entrepreneur'],
   authors: [{ name: 'Risly' }],
   manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon-32.png',
+    apple: '/apple-touch-icon.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Risly',
+    startupImage: '/apple-touch-icon.png',
   },
 }
 

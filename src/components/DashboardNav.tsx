@@ -2,31 +2,41 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, TrendingUp, Target, Settings, LogOut, Menu, X, BarChart3, Calculator, Truck, Receipt, Users } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, Target, Settings, LogOut, Menu, X, BarChart3, Calculator, Truck, Receipt, Users, CalendarDays, Lock } from 'lucide-react'
 import { LogoFull } from '@/components/Logo'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { useApp } from '@/lib/store'
 import { useTheme } from '@/components/ThemeProvider'
 import { Sun, Moon } from 'lucide-react'
 
 const NAV = [
-  { href: '/dashboard',              label: 'Tableau de bord', icon: LayoutDashboard },
-  { href: '/dashboard/ventes',       label: 'Ventes',          icon: TrendingUp },
-  { href: '/dashboard/rapports',     label: 'Rapports',        icon: BarChart3 },
-  { href: '/dashboard/objectifs',    label: 'Objectifs',       icon: Target },
-  { href: '/dashboard/calculateur',  label: 'Calculateur',     icon: Calculator },
-  { href: '/dashboard/fournisseurs', label: 'Fournisseurs',    icon: Truck },
-  { href: '/dashboard/factures',     label: 'Factures',        icon: Receipt },
-  { href: '/dashboard/crm',          label: 'CRM Clients',     icon: Users },
-  { href: '/dashboard/parametres',   label: 'Paramètres',      icon: Settings },
+  { href: '/dashboard',              label: 'Tableau de bord',  icon: LayoutDashboard, pro: false },
+  { href: '/dashboard/ventes',       label: 'Ventes',           icon: TrendingUp,      pro: false },
+  { href: '/dashboard/rapports',     label: 'Rapports',         icon: BarChart3,       pro: false },
+  { href: '/dashboard/objectifs',    label: 'Objectifs',        icon: Target,          pro: false },
+  { href: '/dashboard/calculateur',  label: 'Calculateur',      icon: Calculator,      pro: false },
+  { href: '/dashboard/fournisseurs', label: 'Fournisseurs',     icon: Truck,           pro: true  },
+  { href: '/dashboard/factures',     label: 'Factures',         icon: Receipt,         pro: true  },
+  { href: '/dashboard/crm',          label: 'CRM Clients',      icon: Users,           pro: true  },
+  { href: '/dashboard/drops',        label: 'Calendrier drops', icon: CalendarDays,    pro: true  },
+  { href: '/dashboard/parametres',   label: 'Paramètres',       icon: Settings,        pro: false },
 ]
 
 export default function DashboardNav() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
-  const { currency, setCurrency } = useApp()
+  const [userEmail, setUserEmail] = useState('')
+  const { currency, setCurrency, userPlan } = useApp()
+  const isStarter = userPlan === 'starter'
   const { theme, toggle } = useTheme()
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => {
+      if (data.user?.email) setUserEmail(data.user.email)
+    })
+  }, [])
 
   const NavContent = () => (
     <>
@@ -37,8 +47,9 @@ export default function DashboardNav() {
 
       {/* Links */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV.map(({ href, label, icon: Icon }) => {
+        {NAV.map(({ href, label, icon: Icon, pro }) => {
           const active = pathname === href
+          const locked = pro && isStarter
           return (
             <Link
               key={href}
@@ -48,16 +59,19 @@ export default function DashboardNav() {
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200',
                 active
                   ? 'bg-emerald-500/[0.1] text-emerald-400 border border-emerald-500/[0.15] font-medium'
+                  : locked
+                  ? 'text-gray-700 font-normal cursor-pointer'
                   : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04] font-normal'
               )}
             >
               <Icon
                 size={16}
                 strokeWidth={active ? 2 : 1.75}
-                className={active ? 'text-emerald-400' : 'text-gray-600'}
+                className={active ? 'text-emerald-400' : locked ? 'text-gray-700' : 'text-gray-600'}
               />
               {label}
               {active && <div className="ml-auto w-1 h-1 rounded-full bg-emerald-400" />}
+              {locked && <Lock size={11} className="ml-auto text-gray-700" />}
             </Link>
           )
         })}
@@ -104,20 +118,20 @@ export default function DashboardNav() {
       <div className="px-3 pb-5 border-t border-white/[0.04] pt-3 space-y-0.5">
         <div className="flex items-center gap-3 px-3 py-2.5">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">
-            J
+            {userEmail ? userEmail[0].toUpperCase() : '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white/90 truncate">Jean Dupont</p>
-            <p className="text-xs text-gray-600 truncate">Plan Pro · Actif</p>
+            <p className="text-sm font-medium text-white/90 truncate">{userEmail || '…'}</p>
+            <p className="text-xs text-gray-600 truncate">Risly · Actif</p>
           </div>
         </div>
-        <Link
-          href="/"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:text-gray-300 hover:bg-white/[0.03] transition-all"
+        <button
+          onClick={async () => { await createClient().auth.signOut(); window.location.href = '/' }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:text-gray-300 hover:bg-white/[0.03] transition-all"
         >
           <LogOut size={15} strokeWidth={1.75} />
           Déconnexion
-        </Link>
+        </button>
       </div>
     </>
   )

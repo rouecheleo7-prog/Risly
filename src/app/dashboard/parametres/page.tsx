@@ -8,7 +8,31 @@ import { Check, User, Bell, CreditCard, Shield, ChevronRight, AlertTriangle, Log
 
 export default function ParametresPage() {
   const router = useRouter()
-  const { currency, setCurrency, marginAlertThreshold, setMarginAlertThreshold } = useApp()
+  const { currency, setCurrency, marginAlertThreshold, setMarginAlertThreshold, userPlan } = useApp()
+  const [changingPlan, setChangingPlan] = useState(false)
+
+  const PLAN_LABELS: Record<string, { name: string; price: string }> = {
+    starter:  { name: 'Starter',  price: '14 CHF/mois' },
+    pro:      { name: 'Pro',      price: '24 CHF/mois' },
+    business: { name: 'Business', price: '49 CHF/mois' },
+  }
+  const currentPlan = PLAN_LABELS[userPlan] ?? PLAN_LABELS.starter
+
+  async function changePlan() {
+    setChangingPlan(true)
+    try {
+      const res = await fetch('/api/create-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: fullName || email, email, plan: 'pro' }),
+      })
+      const data = await res.json()
+      if (data.checkoutUrl) window.location.href = data.checkoutUrl
+    } catch {
+      alert('Erreur, réessaie.')
+    }
+    setChangingPlan(false)
+  }
   const [thresholdInput, setThresholdInput] = useState(String(marginAlertThreshold))
   const [email, setEmail] = useState('')
   const [fullName, setFullName] = useState('')
@@ -206,18 +230,29 @@ export default function ParametresPage() {
         </div>
         <div className="flex items-center justify-between p-4 bg-emerald-500/[0.06] border border-emerald-500/15 rounded-xl mb-4">
           <div>
-            <p className="font-semibold text-emerald-400 text-sm">Plan Pro</p>
-            <p className="text-xs text-gray-600 mt-0.5">Renouvellement le 8 juillet 2026</p>
+            <p className="font-semibold text-emerald-400 text-sm">Plan {currentPlan.name}</p>
+            <p className="text-xs text-gray-600 mt-0.5">Abonnement actif</p>
           </div>
-          <span className="text-sm font-bold">24 CHF/mois</span>
+          <span className="text-sm font-bold">{currentPlan.price}</span>
         </div>
+        {userPlan === 'starter' && (
+          <div className="mb-4 p-3 rounded-xl border border-emerald-700/30 text-xs text-emerald-400" style={{ background: 'rgba(5,150,105,0.06)' }}>
+            Passez au plan Pro pour débloquer CRM, Factures, Fournisseurs et Calendrier drops.
+          </div>
+        )}
         <div className="flex gap-3">
-          <button className="flex-1 flex items-center justify-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-white py-2.5 rounded-xl text-sm font-medium transition-all">
-            Changer de plan <ChevronRight size={13} strokeWidth={2} />
+          <button
+            onClick={changePlan}
+            disabled={changingPlan || userPlan === 'business'}
+            className="flex-1 flex items-center justify-center gap-1.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-white py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-40"
+          >
+            {changingPlan ? 'Redirection...' : userPlan === 'business' ? 'Plan maximum' : 'Passer au plan Pro'} <ChevronRight size={13} strokeWidth={2} />
           </button>
-          <button className="text-red-500/70 hover:text-red-400 text-sm px-4 transition-colors font-medium">
-            Annuler
-          </button>
+          {userPlan !== 'starter' && (
+            <button className="text-red-500/70 hover:text-red-400 text-sm px-4 transition-colors font-medium">
+              Annuler
+            </button>
+          )}
         </div>
       </section>
 

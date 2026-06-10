@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ChevronRight, Check, Star, TrendingUp, BarChart3, Target, Globe, Smartphone, Zap, ArrowRight } from 'lucide-react'
+import { ChevronRight, Check, Star, TrendingUp, BarChart3, Target, Globe, Smartphone, Zap, ArrowRight, Calculator, Truck, Receipt, Users, CalendarDays, FileText } from 'lucide-react'
 import AnimatedCounter from '@/components/AnimatedCounter'
 import { LogoFull } from '@/components/Logo'
 import HeroAnimated from '@/components/HeroAnimated'
@@ -127,7 +127,9 @@ export default function LandingPage() {
       <section id="fonctionnalites" className="relative z-10 py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <SectionTitle badge="Fonctionnalités" title="Tout ce qu'il faut." sub="Une interface pensée pour aller vite. Pas pour vous noyer dans les menus." />
-          <StaggerContainer className="grid md:grid-cols-3 gap-4">
+
+          {/* Ligne 1 — Hero feature */}
+          <StaggerContainer className="grid md:grid-cols-3 gap-4 mb-4">
             <StaggerItem className="md:col-span-2">
               <HoverCard className="rounded-2xl p-6 relative overflow-hidden border border-white/5 h-full" style={{ background: 'rgba(5,150,105,0.05)' }}>
                 <div className="absolute top-0 right-0 w-60 h-60 rounded-full blur-3xl" style={{ background: 'rgba(5,150,105,0.08)' }} />
@@ -137,40 +139,75 @@ export default function LandingPage() {
                 <h3 className="text-xl font-bold mb-2">Suivi des ventes en temps réel</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">Enregistrez chaque vente en 10 secondes. Prix d&apos;achat, prix de vente, marge nette — tout est calculé instantanément.</p>
                 <div className="mt-5 flex items-center gap-2 flex-wrap">
-                  {['Auto-calcul marge', 'Historique complet', 'Export CSV'].map(t => (
+                  {['Auto-calcul marge', 'Historique complet', 'Stock intégré'].map(t => (
                     <span key={t} className="text-xs border border-emerald-800/40 text-emerald-400 px-2.5 py-1 rounded-full" style={{ background: 'rgba(5,150,105,0.08)' }}>{t}</span>
                   ))}
                 </div>
               </HoverCard>
             </StaggerItem>
             <StaggerItem>
-              <HoverCard className="rounded-2xl p-6 relative overflow-hidden border border-white/5 h-full" style={{ background: 'rgba(59,130,246,0.04)' }}>
-                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border border-blue-700/30" style={{ background: 'rgba(59,130,246,0.1)' }}>
-                  <BarChart3 size={20} className="text-blue-400" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">Graphiques avancés</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">Courbes de progression, comparaisons mensuelles, tendances IA.</p>
-              </HoverCard>
-            </StaggerItem>
-            <StaggerItem>
-              <HoverCard className="rounded-2xl p-6 relative overflow-hidden border border-white/5 h-full" style={{ background: 'rgba(139,92,246,0.04)' }}>
-                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border border-purple-700/30" style={{ background: 'rgba(139,92,246,0.1)' }}>
-                  <Target size={20} className="text-purple-400" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">Objectifs personnalisés</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">Fixez vos objectifs mensuels, suivez votre progression en temps réel.</p>
-              </HoverCard>
-            </StaggerItem>
-            <StaggerItem className="md:col-span-2">
               <HoverCard className="rounded-2xl p-6 relative overflow-hidden border border-white/5 h-full" style={{ background: 'rgba(234,179,8,0.03)' }}>
                 <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border border-yellow-700/30" style={{ background: 'rgba(234,179,8,0.1)' }}>
                   <Zap size={20} className="text-yellow-400" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Intelligence Artificielle intégrée</h3>
-                <p className="text-gray-500 text-sm leading-relaxed mb-4">Risly analyse vos données et prédit les meilleures périodes pour vendre.</p>
+                <h3 className="text-lg font-bold mb-2">Conseils IA</h3>
+                <p className="text-gray-500 text-sm leading-relaxed mb-3">Risly analyse vos données et vous donne des conseils chaque semaine.</p>
                 <div className="rounded-xl p-3 text-xs text-yellow-400/80 border border-yellow-800/20" style={{ background: 'rgba(234,179,8,0.06)' }}>
-                  💡 &ldquo;Vos ventes Air Jordan progressent de 34% les vendredis. Idéal pour publier ce week-end.&rdquo;
+                  💡 &ldquo;Vos Jordan se vendent mieux le vendredi. Publiez ce week-end.&rdquo;
                 </div>
+              </HoverCard>
+            </StaggerItem>
+          </StaggerContainer>
+
+          {/* Ligne 2 — 3 tools */}
+          <StaggerContainer className="grid md:grid-cols-3 gap-4 mb-4">
+            <StaggerItem>
+              <HoverCard className="rounded-2xl p-6 border border-white/5 h-full" style={{ background: 'rgba(59,130,246,0.04)' }}>
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border border-blue-700/30" style={{ background: 'rgba(59,130,246,0.1)' }}>
+                  <Calculator size={20} className="text-blue-400" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Calculateur de rentabilité</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">Simulez vos profits avant d&apos;acheter. Calculez votre seuil de rentabilité et comparez jusqu&apos;à 5 scénarios.</p>
+              </HoverCard>
+            </StaggerItem>
+            <StaggerItem>
+              <HoverCard className="rounded-2xl p-6 border border-white/5 h-full" style={{ background: 'rgba(139,92,246,0.04)' }}>
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border border-purple-700/30" style={{ background: 'rgba(139,92,246,0.1)' }}>
+                  <Users size={20} className="text-purple-400" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">CRM Clients</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">Gérez vos acheteurs réguliers. Historique d&apos;achats, relances, statut VIP — tout au même endroit.</p>
+              </HoverCard>
+            </StaggerItem>
+            <StaggerItem>
+              <HoverCard className="rounded-2xl p-6 border border-white/5 h-full" style={{ background: 'rgba(249,115,22,0.03)' }}>
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border border-orange-700/30" style={{ background: 'rgba(249,115,22,0.1)' }}>
+                  <Receipt size={20} className="text-orange-400" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Générateur de factures</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">Créez des factures professionnelles en 30 secondes. Aperçu live, export PDF prêt à envoyer.</p>
+              </HoverCard>
+            </StaggerItem>
+          </StaggerContainer>
+
+          {/* Ligne 3 — 3 features */}
+          <StaggerContainer className="grid md:grid-cols-3 gap-4">
+            <StaggerItem>
+              <HoverCard className="rounded-2xl p-6 border border-white/5 h-full" style={{ background: 'rgba(20,184,166,0.03)' }}>
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border border-teal-700/30" style={{ background: 'rgba(20,184,166,0.1)' }}>
+                  <Truck size={20} className="text-teal-400" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Historique fournisseurs</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">Notez vos fournisseurs, suivez les dépenses par source et repérez les meilleurs partenaires.</p>
+              </HoverCard>
+            </StaggerItem>
+            <StaggerItem>
+              <HoverCard className="rounded-2xl p-6 border border-white/5 h-full" style={{ background: 'rgba(236,72,153,0.03)' }}>
+                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border border-pink-700/30" style={{ background: 'rgba(236,72,153,0.1)' }}>
+                  <CalendarDays size={20} className="text-pink-400" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Calendrier de drops</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">Planifiez vos achats et ventes à venir. Ne ratez plus aucun drop avec les alertes intégrées.</p>
               </HoverCard>
             </StaggerItem>
             <StaggerItem>
@@ -178,17 +215,8 @@ export default function LandingPage() {
                 <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border border-orange-700/30" style={{ background: 'rgba(249,115,22,0.1)' }}>
                   <Globe size={20} className="text-orange-400" />
                 </div>
-                <h3 className="text-lg font-bold mb-2">CHF & Euro</h3>
-                <p className="text-gray-500 text-sm">Basculez en un clic entre franc suisse et euro.</p>
-              </HoverCard>
-            </StaggerItem>
-            <StaggerItem>
-              <HoverCard className="rounded-2xl p-6 border border-white/5 h-full" style={{ background: 'rgba(236,72,153,0.03)' }}>
-                <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 border border-pink-700/30" style={{ background: 'rgba(236,72,153,0.1)' }}>
-                  <Smartphone size={20} className="text-pink-400" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">App mobile (PWA)</h3>
-                <p className="text-gray-500 text-sm">Ajoutez Risly à votre écran d&apos;accueil. Aucune installation requise.</p>
+                <h3 className="text-lg font-bold mb-2">CHF & Euro · App mobile</h3>
+                <p className="text-gray-500 text-sm">Basculez en un clic. Installez Risly sur votre téléphone comme une vraie application.</p>
               </HoverCard>
             </StaggerItem>
           </StaggerContainer>
@@ -226,9 +254,9 @@ export default function LandingPage() {
           <SectionTitle badge="Tarifs" title="Simple." sub="3 jours gratuits. Pas de carte requise. Annulez à tout moment." />
           <StaggerContainer className="grid md:grid-cols-3 gap-5">
             {[
-              { name: 'Starter', price: '14', desc: 'Parfait pour débuter', features: ["Jusqu'à 50 articles", 'Bénéfices temps réel', '3 objectifs', 'CHF & Euro', 'App mobile PWA'], popular: false },
-              { name: 'Pro', price: '24', desc: 'Le plus populaire', features: ['Articles illimités', 'Objectifs illimités', 'Graphiques avancés', 'Suggestions IA', 'Export CSV', 'Support prioritaire'], popular: true },
-              { name: 'Business', price: '49', desc: 'Pour les sérieux', features: ['Tout Pro inclus', 'Multi-utilisateurs ×3', 'Analyses IA poussées', 'Rapports PDF', 'API access', 'Onboarding dédié'], popular: false },
+              { name: 'Starter', price: '14', desc: 'Parfait pour débuter', features: ["Jusqu'à 50 ventes/mois", 'Bénéfices temps réel', 'Calculateur rentabilité', 'CHF & Euro', 'App mobile PWA'], popular: false },
+              { name: 'Pro', price: '24', desc: 'Le plus populaire', features: ['Ventes illimitées', 'CRM Clients', 'Fournisseurs', 'Factures PDF', 'Calendrier de drops', 'Conseils IA', 'Objectifs illimités'], popular: true },
+              { name: 'Business', price: '49', desc: 'Pour les sérieux', features: ['Tout Pro inclus', 'Multi-utilisateurs ×3', 'Analyses IA poussées', 'Export comptable CSV', 'Rapports avancés', 'Support prioritaire'], popular: false },
             ].map((plan) => (
               <StaggerItem key={plan.name}>
                 <HoverCard className="relative rounded-3xl p-6 h-full flex flex-col" style={{
