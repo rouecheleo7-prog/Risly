@@ -263,8 +263,14 @@ export default function CalculateurPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {scenarios.map((s, i) => {
             const r = calc(s)
-            const colors = ['emerald', 'blue', 'purple', 'orange', 'pink']
-            const color = colors[i % colors.length]
+            const palette = [
+              { bg: 'rgba(5,150,105,0.08)', border: 'rgba(5,150,105,0.2)', text: '#10b981' },
+              { bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.2)', text: '#60a5fa' },
+              { bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.2)', text: '#a78bfa' },
+              { bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.2)', text: '#fb923c' },
+              { bg: 'rgba(236,72,153,0.08)', border: 'rgba(236,72,153,0.2)', text: '#f472b6' },
+            ]
+            const pal = palette[i % palette.length]
             return (
               <div key={s.id} className="rounded-xl p-4 space-y-3 border" style={{ background: 'var(--surface-input)', borderColor: 'var(--border)' }}>
                 <div className="flex items-center justify-between">
@@ -298,12 +304,12 @@ export default function CalculateurPage() {
                     </div>
                   ))}
                 </div>
-                <div className={`rounded-xl p-3 text-center bg-${color}-500/[0.08] border border-${color}-500/20`}>
+                <div className="rounded-xl p-3 text-center" style={{ background: pal.bg, border: `1px solid ${pal.border}` }}>
                   <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Bénéfice net</p>
-                  <p className={`text-lg font-black text-${color}-400`}>
+                  <p className="text-lg font-black" style={{ color: pal.text }}>
                     {r.net >= 0 ? '+' : ''}{formatCurrency(r.net, currency)}
                   </p>
-                  <p className={`text-xs text-${color}-400 mt-0.5`}>Marge {r.margin}% · ROI {r.roi}%</p>
+                  <p className="text-xs mt-0.5" style={{ color: pal.text }}>Marge {r.margin}% · ROI {r.roi}%</p>
                 </div>
               </div>
             )
