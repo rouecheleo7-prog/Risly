@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       'line_items[0][quantity]': '1',
       'subscription_data[trial_period_days]': '3',
       'subscription_data[metadata][name]': name,
-      'success_url': `${origin}/onboarding?session_id={CHECKOUT_SESSION_ID}`,
+      'success_url': `${origin}/auth/verify-email?email=${encodeURIComponent(email)}`,
       'cancel_url': `${origin}/auth/signup`,
       'allow_promotion_codes': promoCode ? 'false' : 'true',
     })
