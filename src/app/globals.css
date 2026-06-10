@@ -365,3 +365,85 @@ body {
 .input-field::placeholder { color: var(--text-muted); }
 .input-field:focus { border-color: rgba(5,150,105,0.5); }
 .input-field option { background: var(--surface-modal); }
+
+/* ── LIGHT MODE OVERRIDES ── */
+[data-theme="light"] {
+  /* Backgrounds hardcodés */
+  .bg-\[#060606\], .bg-\[#050505\], .bg-\[#0e0e0e\], .bg-\[#111\] {
+    background-color: var(--surface-bg) !important;
+  }
+
+  /* Textes blancs → sombres */
+  .text-white { color: var(--text-primary) !important; }
+  .text-white\/90 { color: var(--text-primary) !important; }
+  .text-white\/80 { color: #374151 !important; }
+
+  /* Gris → adaptés */
+  .text-gray-300 { color: #374151 !important; }
+  .text-gray-400 { color: #4b5563 !important; }
+  .text-gray-500 { color: #6b7280 !important; }
+  .text-gray-600 { color: #9ca3af !important; }
+  .text-gray-700 { color: #d1d5db !important; }
+
+  /* Backgrounds transparents blancs → gris clair */
+  .bg-white\/\[0\.04\], .bg-white\/\[0\.05\], .bg-white\/\[0\.03\], .bg-white\/\[0\.02\] {
+    background-color: rgba(0,0,0,0.04) !important;
+  }
+  .bg-white\/\[0\.07\], .bg-white\/\[0\.08\] {
+    background-color: rgba(0,0,0,0.06) !important;
+  }
+
+  /* Borders blanches → sombres */
+  .border-white\/\[0\.05\], .border-white\/\[0\.06\], .border-white\/\[0\.07\],
+  .border-white\/\[0\.08\], .border-white\/\[0\.04\], .border-white\/10 {
+    border-color: rgba(0,0,0,0.1) !important;
+  }
+
+  /* Divide */
+  .divide-white\/\[0\.04\] > * + * {
+    border-color: rgba(0,0,0,0.07) !important;
+  }
+
+  /* Cards et surfaces */
+  .glass-dashboard {
+    background: rgba(255,255,255,0.85) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06) !important;
+  }
+  .glass-stat {
+    background: rgba(255,255,255,0.8) !important;
+    border-color: rgba(0,0,0,0.08) !important;
+  }
+
+  /* Modal */
+  [style*="background: #0e0e0e"], [style*="background: rgb(14, 14, 14)"] {
+    background: #ffffff !important;
+  }
+
+  /* Hover sur bg */
+  .hover\:bg-white\/\[0\.015\]:hover, .hover\:bg-white\/\[0\.04\]:hover,
+  .hover\:bg-white\/\[0\.07\]:hover, .hover\:bg-white\/5:hover {
+    background-color: rgba(0,0,0,0.04) !important;
+  }
+
+  /* Skeleton */
+  .skeleton {
+    background: linear-gradient(90deg, rgba(0,0,0,0.06) 25%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.06) 75%) !important;
+  }
+
+  /* Input fields dans les modals */
+  .input-field {
+    background: rgba(0,0,0,0.04) !important;
+    border-color: rgba(0,0,0,0.12) !important;
+    color: #111827 !important;
+  }
+  .input-field::placeholder { color: #9ca3af !important; }
+
+  /* Sections avec background inline sombre */
+  [style*="background: rgba(255,255,255,0.02)"],
+  [style*="background: rgba(255,255,255,0.03)"],
+  [style*="background: rgba(255,255,255,0.04)"],
+  [style*="background: rgba(255,255,255,0.05)"] {
+    background: rgba(0,0,0,0.03) !important;
+  }
+}
