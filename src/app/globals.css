@@ -362,7 +362,7 @@ body {
   outline: none;
   transition: border-color 0.2s, background 0.3s, color 0.3s;
 }
-.input-field::placeholder { color: var(--text-muted); }
+.input-field::placeholder { color: #4b5563; opacity: 1; }
 .input-field:focus { border-color: rgba(5,150,105,0.5); }
 .input-field option { background: var(--surface-modal); }
 
