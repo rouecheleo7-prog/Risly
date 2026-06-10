@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, TrendingUp, Target, Settings, LogOut, Menu, X, BarChart3, Calculator, Truck, Receipt } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, Target, Settings, LogOut, Menu, X, BarChart3, Calculator, Truck, Receipt, Users } from 'lucide-react'
 import { LogoFull } from '@/components/Logo'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -18,6 +18,7 @@ const NAV = [
   { href: '/dashboard/calculateur',  label: 'Calculateur',     icon: Calculator },
   { href: '/dashboard/fournisseurs', label: 'Fournisseurs',    icon: Truck },
   { href: '/dashboard/factures',     label: 'Factures',        icon: Receipt },
+  { href: '/dashboard/crm',          label: 'CRM Clients',     icon: Users },
   { href: '/dashboard/parametres',   label: 'Paramètres',      icon: Settings },
 ]
 
