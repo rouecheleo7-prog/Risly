@@ -159,7 +159,7 @@ export default function CRMPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Nom, contact, tag…" className="input-field pl-10" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Nom, contact, tag…" className="input-field" style={{ paddingLeft: '36px' }} />
           {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-white"><X size={13} /></button>}
         </div>
         <div className="flex gap-1 p-1 rounded-xl border" style={{ background: 'var(--surface-input)', borderColor: 'var(--border)' }}>
