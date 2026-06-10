@@ -457,8 +457,8 @@ export default function VentesPage() {
 
       {/* ── MODAL ARTICLE ── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4" onClick={() => setShowModal(false)}>
-          <div className="glass-dashboard rounded-2xl w-full max-w-lg p-6 animate-card-enter border border-white/10 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4" onClick={() => setShowModal(false)}>
+          <div className="w-full max-w-lg rounded-2xl p-6 animate-card-enter border border-white/10 max-h-[90vh] overflow-y-auto" style={{ background: '#0e0e0e' }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="text-base font-semibold">
@@ -483,9 +483,10 @@ export default function VentesPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Catégorie</label>
-                  <select {...f('category')} className="input-field">
-                    {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#111]">{c}</option>)}
-                  </select>
+                  <input list="categories-list" placeholder="Sneakers, Tech…" {...f('category')} className="input-field" />
+                  <datalist id="categories-list">
+                    {CATEGORIES.map(c => <option key={c} value={c} />)}
+                  </datalist>
                 </div>
               </div>
 
@@ -589,7 +590,7 @@ export default function VentesPage() {
       {/* ── MODAL CONVERSION STOCK → VENTE ── */}
       {convertingStock && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4" onClick={() => setConvertingStock(null)}>
-          <div className="glass-dashboard rounded-2xl w-full max-w-sm p-6 animate-card-enter border border-white/10" onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-2xl p-6 animate-card-enter border border-white/10" style={{ background: '#0e0e0e' }} onClick={e => e.stopPropagation()}>
             <h2 className="text-base font-semibold mb-1">Marquer comme vendu</h2>
             <p className="text-xs text-gray-600 mb-5">{convertingStock.product}</p>
             <div className="space-y-3">

@@ -6,6 +6,7 @@ import { LayoutDashboard, TrendingUp, Target, Settings, LogOut, Menu, X, BarChar
 import { LogoFull } from '@/components/Logo'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { useApp } from '@/lib/store'
 
 const NAV = [
   { href: '/dashboard',              label: 'Tableau de bord', icon: LayoutDashboard },
@@ -18,6 +19,7 @@ const NAV = [
 export default function DashboardNav() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const { currency, setCurrency } = useApp()
 
   const NavContent = () => (
     <>
@@ -53,6 +55,26 @@ export default function DashboardNav() {
           )
         })}
       </nav>
+
+      {/* Currency toggle */}
+      <div className="px-4 pb-3">
+        <div className="flex items-center gap-1 p-1 rounded-xl border border-white/[0.06]" style={{ background: 'rgba(255,255,255,0.03)' }}>
+          {(['CHF', 'EUR'] as const).map((c) => (
+            <button
+              key={c}
+              onClick={() => setCurrency(c)}
+              className={cn(
+                'flex-1 py-2 rounded-lg text-xs font-bold transition-all',
+                currency === c
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-gray-600 hover:text-gray-400'
+              )}
+            >
+              {c === 'CHF' ? '🇨🇭 CHF' : '🇪🇺 EUR'}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* User */}
       <div className="px-3 pb-5 border-t border-white/[0.04] pt-3 space-y-0.5">
