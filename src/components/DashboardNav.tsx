@@ -7,6 +7,8 @@ import { LogoFull } from '@/components/Logo'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useApp } from '@/lib/store'
+import { useTheme } from '@/components/ThemeProvider'
+import { Sun, Moon } from 'lucide-react'
 
 const NAV = [
   { href: '/dashboard',              label: 'Tableau de bord', icon: LayoutDashboard },
@@ -20,6 +22,7 @@ export default function DashboardNav() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const { currency, setCurrency } = useApp()
+  const { theme, toggle } = useTheme()
 
   const NavContent = () => (
     <>
@@ -55,6 +58,23 @@ export default function DashboardNav() {
           )
         })}
       </nav>
+
+      {/* Theme toggle */}
+      <div className="px-4 pb-2">
+        <button
+          onClick={toggle}
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all text-sm"
+          style={{ background: 'var(--surface-input)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+        >
+          <span className="flex items-center gap-2">
+            {theme === 'dark' ? <Moon size={14} className="text-blue-400" /> : <Sun size={14} className="text-yellow-400" />}
+            {theme === 'dark' ? 'Mode sombre' : 'Mode clair'}
+          </span>
+          <div className={cn('w-8 h-4 rounded-full relative transition-colors', theme === 'light' ? 'bg-emerald-600' : 'bg-white/10')}>
+            <div className={cn('absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all', theme === 'light' ? 'left-4' : 'left-0.5')} />
+          </div>
+        </button>
+      </div>
 
       {/* Currency toggle */}
       <div className="px-4 pb-3">
@@ -101,15 +121,15 @@ export default function DashboardNav() {
   return (
     <>
       {/* Desktop */}
-      <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-64 border-r border-white/[0.05] z-40"
-        style={{ background: 'rgba(8,8,8,0.95)', backdropFilter: 'blur(24px)' }}>
+      <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-64 z-40"
+        style={{ background: 'var(--surface-nav)', backdropFilter: 'blur(24px)', borderRight: '1px solid var(--border-subtle)' }}>
         <NavContent />
       </aside>
 
       {/* Mobile top bar */}
       <div
-        className="md:hidden fixed top-0 left-0 right-0 z-50 border-b border-white/[0.05] flex items-center justify-between px-4 h-14"
-        style={{ background: 'rgba(6,6,6,0.95)', backdropFilter: 'blur(20px)' }}
+        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14"
+        style={{ background: 'var(--surface-nav)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border-subtle)' }}
       >
         <LogoFull size="sm" />
         <button onClick={() => setOpen(!open)} className="text-gray-500 hover:text-white transition-colors p-1.5">
@@ -122,8 +142,8 @@ export default function DashboardNav() {
         <div className="md:hidden fixed inset-0 z-40" onClick={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <aside
-            className="absolute left-0 top-0 h-full w-72 flex flex-col border-r border-white/[0.06]"
-            style={{ background: 'rgba(6,6,6,0.98)', backdropFilter: 'blur(24px)' }}
+            className="absolute left-0 top-0 h-full w-72 flex flex-col"
+            style={{ background: 'var(--surface-nav)', backdropFilter: 'blur(24px)', borderRight: '1px solid var(--border)' }}
             onClick={e => e.stopPropagation()}
           >
             <div className="pt-14">

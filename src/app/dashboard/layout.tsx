@@ -1,11 +1,13 @@
 import AppProvider from '@/components/AppProvider'
 import DashboardNav from '@/components/DashboardNav'
 import PageTransition from '@/components/PageTransition'
+import { ThemeProvider } from '@/components/ThemeProvider'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
+    <ThemeProvider>
     <AppProvider>
-      <div className="min-h-screen bg-[#060606] text-white flex">
+      <div className="min-h-screen flex" style={{ background: 'var(--surface-bg)', color: 'var(--text-primary)' }}>
         {/* Ambient background */}
         <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
           <div className="absolute top-0 left-64 w-[500px] h-[300px] bg-emerald-600/[0.04] blur-[100px] rounded-full" />
@@ -26,5 +28,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
     </AppProvider>
+    </ThemeProvider>
   )
 }
