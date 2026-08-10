@@ -1,14 +1,14 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Inter, Space_Grotesk } from 'next/font/google'
 import './globals.css'
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
-const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
+const inter = Inter({ variable: '--font-inter', subsets: ['latin'], display: 'swap', weight: ['400', '500', '600'] })
+const spaceGrotesk = Space_Grotesk({ variable: '--font-space-grotesk', subsets: ['latin'], display: 'swap', weight: ['500', '600', '700'] })
 
 export const metadata: Metadata = {
-  title: 'Risly — Pilotez votre business',
-  description: "Suivez vos ventes et bénéfices en temps réel. L'outil SaaS ultra-simple pour les revendeurs et entrepreneurs ambitieux.",
-  keywords: ['revendeur', 'business', 'ventes', 'bénéfices', 'SaaS', 'entrepreneur'],
+  title: 'Risly — Agence digitale Suisse romande',
+  description: 'Création de sites web, automatisations IA, menus QR et cartes NFC pour les professionnels en Suisse romande.',
+  keywords: ['agence digitale', 'site web', 'automatisation IA', 'menu QR', 'carte NFC', 'Suisse romande'],
   authors: [{ name: 'Risly' }],
   manifest: '/manifest.json',
   icons: {
@@ -19,19 +19,18 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Risly',
-    startupImage: '/apple-touch-icon.png',
   },
 }
 
 export const viewport: Viewport = {
-  themeColor: '#059669',
+  themeColor: '#4F46E5',
   width: 'device-width',
   initialScale: 1,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${geistSans.variable} ${geistMono.variable} h-full`} suppressHydrationWarning>
+    <html lang="fr" className={`${inter.variable} ${spaceGrotesk.variable} h-full`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col antialiased">{children}</body>
     </html>
   )
