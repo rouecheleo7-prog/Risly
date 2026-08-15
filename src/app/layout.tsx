@@ -6,7 +6,7 @@ const inter = Inter({ variable: '--font-inter', subsets: ['latin'], display: 'sw
 const spaceGrotesk = Space_Grotesk({ variable: '--font-space-grotesk', subsets: ['latin'], display: 'swap', weight: ['500', '600', '700'] })
 
 export const metadata: Metadata = {
-  title: 'Risly — Agence digitale Suisse romande',
+  title: 'Risly, agence digitale en Suisse romande',
   description: 'Création de sites web, automatisations IA, menus QR et cartes NFC pour les professionnels en Suisse romande.',
   keywords: ['agence digitale', 'site web', 'automatisation IA', 'menu QR', 'carte NFC', 'Suisse romande'],
   authors: [{ name: 'Risly' }],
