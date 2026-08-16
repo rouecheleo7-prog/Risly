@@ -2,54 +2,47 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, TrendingUp, Target, Settings, LogOut, Menu, X, BarChart3, Calculator, Truck, Receipt, Users, CalendarDays, Lock } from 'lucide-react'
+import { LayoutDashboard, Settings, LogOut, Menu, X, ExternalLink } from 'lucide-react'
 import { LogoFull } from '@/components/Logo'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
-import { useApp } from '@/lib/store'
 import { useTheme } from '@/components/ThemeProvider'
 import { Sun, Moon } from 'lucide-react'
 
 const NAV = [
-  { href: '/dashboard',              label: 'Tableau de bord',  icon: LayoutDashboard, pro: false },
-  { href: '/dashboard/ventes',       label: 'Ventes',           icon: TrendingUp,      pro: false },
-  { href: '/dashboard/rapports',     label: 'Rapports',         icon: BarChart3,       pro: false },
-  { href: '/dashboard/objectifs',    label: 'Objectifs',        icon: Target,          pro: false },
-  { href: '/dashboard/calculateur',  label: 'Calculateur',      icon: Calculator,      pro: false },
-  { href: '/dashboard/fournisseurs', label: 'Fournisseurs',     icon: Truck,           pro: true  },
-  { href: '/dashboard/factures',     label: 'Factures',         icon: Receipt,         pro: true  },
-  { href: '/dashboard/crm',          label: 'CRM Clients',      icon: Users,           pro: true  },
-  { href: '/dashboard/drops',        label: 'Calendrier drops', icon: CalendarDays,    pro: true  },
-  { href: '/dashboard/parametres',   label: 'Paramètres',       icon: Settings,        pro: false },
+  { href: '/dashboard',           label: 'Vue d’ensemble', icon: LayoutDashboard },
+  { href: '/dashboard/reglages',  label: 'Réglages',          icon: Settings },
 ]
 
 export default function DashboardNav() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [userEmail, setUserEmail] = useState('')
-  const { currency, setCurrency, userPlan } = useApp()
-  const isStarter = userPlan === 'starter'
+  const [slug, setSlug] = useState<string | null>(null)
   const { theme, toggle } = useTheme()
 
   useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
       if (data.user?.email) setUserEmail(data.user.email)
+      if (data.user?.id) {
+        supabase.from('loyalty_merchants').select('slug').eq('id', data.user.id).maybeSingle().then(({ data: merchant }) => {
+          if (merchant?.slug) setSlug(merchant.slug)
+        })
+      }
     })
   }, [])
 
   const NavContent = () => (
     <>
-      {/* Logo */}
       <div className="px-5 py-5 border-b border-white/[0.05]">
         <LogoFull size="sm" />
       </div>
 
-      {/* Links */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
-        {NAV.map(({ href, label, icon: Icon, pro }) => {
+        {NAV.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
-          const locked = pro && isStarter
           return (
             <Link
               key={href}
@@ -59,25 +52,29 @@ export default function DashboardNav() {
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200',
                 active
                   ? 'bg-emerald-500/[0.1] text-emerald-400 border border-emerald-500/[0.15] font-medium'
-                  : locked
-                  ? 'text-gray-700 font-normal cursor-pointer'
                   : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04] font-normal'
               )}
             >
-              <Icon
-                size={16}
-                strokeWidth={active ? 2 : 1.75}
-                className={active ? 'text-emerald-400' : locked ? 'text-gray-700' : 'text-gray-600'}
-              />
+              <Icon size={16} strokeWidth={active ? 2 : 1.75} className={active ? 'text-emerald-400' : 'text-gray-600'} />
               {label}
               {active && <div className="ml-auto w-1 h-1 rounded-full bg-emerald-400" />}
-              {locked && <Lock size={11} className="ml-auto text-gray-700" />}
             </Link>
           )
         })}
+
+        {slug && (
+          <a
+            href={`/carte/${slug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-500 hover:text-gray-200 hover:bg-white/[0.04] font-normal transition-all duration-200"
+          >
+            <ExternalLink size={16} strokeWidth={1.75} className="text-gray-600" />
+            Ma page publique
+          </a>
+        )}
       </nav>
 
-      {/* Theme toggle */}
       <div className="px-4 pb-2">
         <button
           onClick={toggle}
@@ -94,27 +91,6 @@ export default function DashboardNav() {
         </button>
       </div>
 
-      {/* Currency toggle */}
-      <div className="px-4 pb-3">
-        <div className="flex items-center gap-1 p-1 rounded-xl border border-white/[0.06]" style={{ background: 'rgba(255,255,255,0.03)' }}>
-          {(['CHF', 'EUR'] as const).map((c) => (
-            <button
-              key={c}
-              onClick={() => setCurrency(c)}
-              className={cn(
-                'flex-1 py-2 rounded-lg text-xs font-bold transition-all',
-                currency === c
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'text-gray-600 hover:text-gray-400'
-              )}
-            >
-              {c === 'CHF' ? '🇨🇭 CHF' : '🇪🇺 EUR'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* User */}
       <div className="px-3 pb-5 border-t border-white/[0.04] pt-3 space-y-0.5">
         <div className="flex items-center gap-3 px-3 py-2.5">
           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">
@@ -122,7 +98,7 @@ export default function DashboardNav() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white/90 truncate">{userEmail || '…'}</p>
-            <p className="text-xs text-gray-600 truncate">Risly · Actif</p>
+            <p className="text-xs text-gray-600 truncate">Risly · Fidélité</p>
           </div>
         </div>
         <button
@@ -138,13 +114,11 @@ export default function DashboardNav() {
 
   return (
     <>
-      {/* Desktop */}
       <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-64 z-40"
         style={{ background: 'var(--surface-nav)', backdropFilter: 'blur(24px)', borderRight: '1px solid var(--border-subtle)' }}>
         <NavContent />
       </aside>
 
-      {/* Mobile top bar */}
       <div
         className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14"
         style={{ background: 'var(--surface-nav)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border-subtle)' }}
@@ -155,15 +129,9 @@ export default function DashboardNav() {
         </button>
       </div>
 
-      {/* Mobile drawer */}
       {open && (
-        <div className="md:hidden fixed inset-0 z-40" onClick={() => setOpen(false)}>
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-          <aside
-            className="absolute left-0 top-0 h-full w-72 flex flex-col"
-            style={{ background: 'var(--surface-nav)', backdropFilter: 'blur(24px)', borderRight: '1px solid var(--border)' }}
-            onClick={e => e.stopPropagation()}
-          >
+        <div className="md:hidden fixed inset-0 z-40">
+          <aside className="absolute inset-0 flex flex-col overflow-y-auto" style={{ background: 'var(--surface-nav)' }}>
             <div className="pt-14">
               <NavContent />
             </div>

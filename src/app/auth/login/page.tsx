@@ -90,10 +90,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-6">
-          Pas encore de compte ?{' '}
-          <Link href="/auth/signup" className="text-emerald-400 hover:text-emerald-300 transition-colors font-medium">
-            Essai gratuit 3 jours
-          </Link>
+          Pas encore de compte ? Contactez Risly pour l&apos;activer.
         </p>
       </div>
     </div>
