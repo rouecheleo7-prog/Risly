@@ -9,10 +9,11 @@ function parseUtcDate(value: string) {
 }
 
 export default function ImmobilierDemo() {
-  const [activeTab, setActiveTab] = useState<'crm' | 'prix' | 'generator' | 'visites' | 'templates' | 'notes'>('crm')
+  const [activeTab, setActiveTab] = useState<'crm' | 'biens' | 'prix' | 'generator' | 'visites' | 'templates' | 'notes'>('crm')
 
   const tabs = [
     { id: 'crm', label: 'CRM & Prospects', icon: Users },
+    { id: 'biens', label: 'Mes Biens', icon: FileText },
     { id: 'prix', label: 'Outils Prix', icon: Calculator },
     { id: 'generator', label: 'Générateur IA', icon: Sparkles },
     { id: 'visites', label: 'Calendrier Visites', icon: FileText },
@@ -63,6 +64,7 @@ export default function ImmobilierDemo() {
           {/* Content */}
           <div className="bg-white rounded-2xl border border-slate-200/70 p-8 shadow-sm">
             {activeTab === 'crm' && <CRMTab />}
+            {activeTab === 'biens' && <ComparateurTab />}
             {activeTab === 'prix' && <OutilsPrixTab />}
             {activeTab === 'generator' && <GeneratorTab />}
             {activeTab === 'visites' && <VisitesTab />}
@@ -681,12 +683,11 @@ function CRMTab() {
 
 // ─── OUTILS PRIX (regroupe Estimateur, Calculateurs, Comparateur) ───
 function OutilsPrixTab() {
-  const [subTab, setSubTab] = useState<'estimateur' | 'calculateurs' | 'comparateur'>('estimateur')
+  const [subTab, setSubTab] = useState<'estimateur' | 'calculateurs'>('estimateur')
 
   const subTabs = [
     { id: 'estimateur', label: 'Estimateur' },
     { id: 'calculateurs', label: 'Calculateurs' },
-    { id: 'comparateur', label: 'Comparateur' },
   ]
 
   return (
@@ -709,7 +710,6 @@ function OutilsPrixTab() {
 
       {subTab === 'estimateur' && <EstimateurTab />}
       {subTab === 'calculateurs' && <CalculatorTab />}
-      {subTab === 'comparateur' && <ComparateurTab />}
     </div>
   )
 }
