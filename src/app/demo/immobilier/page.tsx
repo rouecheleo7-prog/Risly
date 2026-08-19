@@ -1245,8 +1245,6 @@ function ComparateurTab() {
   const [error, setError] = useState('')
   const [filterLocalite, setFilterLocalite] = useState('')
 
-  const locales = ['Lausanne', 'Genève', 'Zurich', 'Berne', 'Vevey', 'Montreux', 'Neuchâtel']
-
   useEffect(() => {
     loadBiens()
   }, [])
@@ -1352,6 +1350,7 @@ function ComparateurTab() {
     }
   }
 
+  const locales = Array.from(new Set(biens.map(b => b.localite).filter(Boolean))).sort((a, b) => a.localeCompare(b))
   const biensFiltered = filterLocalite ? biens.filter(b => b.localite === filterLocalite) : biens
   const prixM2Moyen = biensFiltered.length > 0 ? biensFiltered.reduce((sum, b) => sum + (b.prix / b.surface), 0) / biensFiltered.length : 0
 
