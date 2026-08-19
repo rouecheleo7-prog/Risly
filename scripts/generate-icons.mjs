@@ -83,6 +83,7 @@ async function generateIcon(size) {
   console.log(`✓ icon-${size}.png`)
 }
 
+await generateIcon(180)
 await generateIcon(192)
 await generateIcon(512)
 console.log('Icons generated!')

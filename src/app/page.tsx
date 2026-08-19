@@ -105,7 +105,7 @@ export default function HomePage() {
                 </p>
               </FadeUp>
               <FadeUp delay={0.24}>
-                <div className="mt-10">
+                <div className="mt-10 flex flex-wrap items-center gap-4">
                   <MagneticButton>
                     <Link
                       href={`${WA}?text=${encodeURIComponent('Bonjour Risly 👋 Je souhaite recevoir une maquette gratuite pour mon projet.')}`}
@@ -114,6 +114,33 @@ export default function HomePage() {
                       rel="noreferrer"
                     >
                       {CTA_LABEL}
+                      <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                    </Link>
+                  </MagneticButton>
+                  <MagneticButton>
+                    <Link
+                      href="/auth/login"
+                      className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-semibold text-sm transition group relative overflow-hidden"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(99, 102, 241, 0.06))',
+                        border: '1.5px solid',
+                        borderImage: 'linear-gradient(135deg, rgba(191, 144, 0, 0.4), rgba(168, 85, 247, 0.3)) 1',
+                        color: 'rgb(79, 70, 229)',
+                      }}
+                    >
+                      <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500" style={{
+                        background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(99, 102, 241, 0.08))',
+                      }} />
+                      <span className="absolute -inset-full top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-20 transition duration-500" style={{
+                        background: 'radial-gradient(circle, rgba(191, 144, 0, 0.3) 0%, transparent 70%)',
+                        filter: 'blur(20px)',
+                      }} />
+                      <span className="relative flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full opacity-60 group-hover:opacity-100 transition" style={{
+                          background: 'linear-gradient(135deg, rgb(191, 144, 0), rgb(168, 85, 247))',
+                        }} />
+                        Risly Pro
+                      </span>
                       <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
                     </Link>
                   </MagneticButton>
