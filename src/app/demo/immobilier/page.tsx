@@ -141,7 +141,7 @@ function CRMTab() {
   const [newNote, setNewNote] = useState('')
   const [error, setError] = useState('')
   const [searchProspect, setSearchProspect] = useState('')
-  const [biensCompatibles, setBiensCompatibles] = useState<any[]>([])
+  const [biens, setBiens] = useState<any[]>([])
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState<any>({})
 
@@ -149,6 +149,7 @@ function CRMTab() {
 
   useEffect(() => {
     loadProspects()
+    loadBiens()
   }, [])
 
   useEffect(() => {
@@ -156,6 +157,69 @@ function CRMTab() {
       loadNotes(selectedProspect.id)
     }
   }, [selectedProspect])
+
+  const loadBiens = async () => {
+    try {
+      const { data: { user } } = await createClient().auth.getUser()
+      if (!user) return
+
+      const { data, error: err } = await createClient()
+        .from('comparables')
+        .select('*')
+        .eq('user_id', user.id)
+
+      if (err) throw err
+      setBiens(data || [])
+    } catch (err: any) {
+      // pas bloquant pour le CRM
+    }
+  }
+
+  const parseNumber = (val: any) => {
+    if (val === null || val === undefined || val === '') return null
+    const n = parseFloat(String(val).replace(/[^0-9.]/g, ''))
+    return isNaN(n) ? null : n
+  }
+
+  const normalize = (val: any) => String(val || '').trim().toLowerCase()
+
+  const getBiensCompatibles = (prospect: any) => {
+    if (!prospect) return []
+    const surfaceMin = parseNumber(prospect.surface_min)
+    const surfaceMax = parseNumber(prospect.surface_max)
+    const budgetMin = parseNumber(prospect.budget_min)
+    const budgetMax = parseNumber(prospect.budget_max)
+
+    return biens
+      .map(bien => {
+        let score = 0
+        let total = 0
+
+        if (prospect.localisation) {
+          total++
+          if (normalize(bien.localite) === normalize(prospect.localisation)) score++
+        }
+        if (prospect.type_bien) {
+          total++
+          if (normalize(bien.type) === normalize(prospect.type_bien)) score++
+        }
+        if (surfaceMin !== null || surfaceMax !== null) {
+          total++
+          const s = parseNumber(bien.surface)
+          if (s !== null && (surfaceMin === null || s >= surfaceMin) && (surfaceMax === null || s <= surfaceMax)) score++
+        }
+        if (budgetMin !== null || budgetMax !== null) {
+          total++
+          const p = parseNumber(bien.prix)
+          if (p !== null && (budgetMin === null || p >= budgetMin) && (budgetMax === null || p <= budgetMax)) score++
+        }
+
+        return { ...bien, matchScore: score, matchTotal: total }
+      })
+      .filter(b => b.matchTotal > 0 && b.matchScore > 0)
+      .sort((a, b) => b.matchScore - a.matchScore)
+      .slice(0, 5)
+  }
 
   const loadProspects = async () => {
     try {
@@ -559,6 +623,35 @@ function CRMTab() {
                 </>
               )}
             </div>
+
+            {!isEditing && (() => {
+              const matches = getBiensCompatibles(selectedProspect)
+              return (
+                <div className="p-6 rounded-xl border border-slate-200 bg-white">
+                  <h3 className="text-lg font-semibold text-slate-950 mb-4">🏠 Biens compatibles</h3>
+                  {matches.length === 0 ? (
+                    <p className="text-sm text-slate-500">Aucun bien du Comparateur ne correspond aux critères pour l'instant.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {matches.map(bien => (
+                        <div key={bien.id} className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-indigo-200 transition">
+                          {bien.image_url ? (
+                            <img src={bien.image_url} alt={bien.adresse} className="w-12 h-12 object-cover rounded-lg border border-slate-200 flex-shrink-0" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs flex-shrink-0">—</div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm text-slate-950 truncate">{bien.adresse}</p>
+                            <p className="text-xs text-slate-500">{bien.type} • {bien.localite} • {bien.surface} m² • {Number(bien.prix).toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</p>
+                          </div>
+                          <span className="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold flex-shrink-0">{bien.matchScore}/{bien.matchTotal}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
 
             <div className="p-6 rounded-xl border border-slate-200 bg-white">
               <h3 className="text-lg font-semibold text-slate-950 mb-4">Notes & Historique</h3>
