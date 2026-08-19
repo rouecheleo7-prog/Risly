@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react'
 import { Home, Users, Calculator, Sparkles, FileText, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
+function parseUtcDate(value: string) {
+  return new Date(/[Zz]|[+-]\d\d:\d\d$/.test(value) ? value : value + 'Z')
+}
+
 export default function ImmobilierDemo() {
   const [activeTab, setActiveTab] = useState<'crm' | 'calculator' | 'generator' | 'estimateur' | 'comparateur' | 'visites' | 'templates' | 'notes'>('crm')
 
@@ -77,13 +81,69 @@ export default function ImmobilierDemo() {
 
 // ─── CRM TAB ───
 function CRMTab() {
-  const [prospects, setProspects] = useState<any[]>([])
+  const [prospects, setProspects] = useState<any[]>([
+    {
+      id: 'demo-1',
+      nom: 'Jean Dupont',
+      email: 'jean@example.com',
+      phone: '+41 76 123 4567',
+      budget: '800\'000 CHF',
+      status: 'Actif',
+      localisation: 'Lausanne',
+      nombre_pieces: '3-4',
+      type_bien: 'Appartement',
+      surface_min: '100',
+      surface_max: '150',
+      budget_min: '700\'000',
+      budget_max: '900\'000',
+      priorites: 'Proximité transports',
+      date_suivi: '2026-08-25',
+      favoris: false
+    },
+    {
+      id: 'demo-2',
+      nom: 'Marie Martin',
+      email: 'marie@example.com',
+      phone: '+41 78 987 6543',
+      budget: '1\'200\'000 CHF',
+      status: 'Intéressé',
+      localisation: 'Genève',
+      nombre_pieces: '4-5',
+      type_bien: 'Maison',
+      surface_min: '200',
+      surface_max: '300',
+      budget_min: '1\'000\'000',
+      budget_max: '1\'500\'000',
+      priorites: 'Jardin, parking',
+      date_suivi: '2026-08-20',
+      favoris: true
+    }
+  ])
   const [loading, setLoading] = useState(true)
-  const [newContact, setNewContact] = useState({ nom: '', email: '', phone: '', budget: '' })
+  const [newContact, setNewContact] = useState({
+    nom: '',
+    email: '',
+    phone: '',
+    budget: '',
+    localisation: '',
+    nombre_pieces: '',
+    type_bien: '',
+    surface_min: '',
+    surface_max: '',
+    budget_min: '',
+    budget_max: '',
+    priorites: '',
+    date_suivi: '',
+    favoris: false
+  })
   const [selectedProspect, setSelectedProspect] = useState<any>(null)
   const [notes, setNotes] = useState<any[]>([])
   const [newNote, setNewNote] = useState('')
   const [error, setError] = useState('')
+  const [searchProspect, setSearchProspect] = useState('')
+  const [biensCompatibles, setBiensCompatibles] = useState<any[]>([])
+  const [isEditing, setIsEditing] = useState(false)
+  const [editForm, setEditForm] = useState<any>({})
 
   const statuses = ['Nouveau', 'Actif', 'Intéressé', 'Visite', 'Achat', 'Fermé']
 
@@ -119,6 +179,10 @@ function CRMTab() {
   }
 
   const loadNotes = async (prospectId: string) => {
+    if (String(prospectId).startsWith('demo-')) {
+      setNotes([])
+      return
+    }
     try {
       const { data, error: err } = await createClient()
         .from('prospect_notes')
@@ -151,11 +215,21 @@ function CRMTab() {
           email: newContact.email || null,
           phone: newContact.phone || null,
           budget: newContact.budget || null,
-          status: 'Nouveau'
+          localisation: newContact.localisation || null,
+          type_bien: newContact.type_bien || null,
+          nombre_pieces: newContact.nombre_pieces || null,
+          surface_min: newContact.surface_min || null,
+          surface_max: newContact.surface_max || null,
+          budget_min: newContact.budget_min || null,
+          budget_max: newContact.budget_max || null,
+          priorites: newContact.priorites || null,
+          date_suivi: newContact.date_suivi || null,
+          status: 'Nouveau',
+          favoris: false
         }])
 
       if (err) throw err
-      setNewContact({ nom: '', email: '', phone: '', budget: '' })
+      setNewContact({ nom: '', email: '', phone: '', budget: '', localisation: '', nombre_pieces: '', type_bien: '', surface_min: '', surface_max: '', budget_min: '', budget_max: '', priorites: '', date_suivi: '', favoris: false })
       setError('')
       loadProspects()
     } catch (err: any) {
@@ -219,6 +293,69 @@ function CRMTab() {
     }
   }
 
+  const startEditing = () => {
+    setEditForm({
+      nom: selectedProspect.nom || '',
+      email: selectedProspect.email || '',
+      phone: selectedProspect.phone || '',
+      budget: selectedProspect.budget || '',
+      localisation: selectedProspect.localisation || '',
+      type_bien: selectedProspect.type_bien || '',
+      nombre_pieces: selectedProspect.nombre_pieces || '',
+      surface_min: selectedProspect.surface_min || '',
+      surface_max: selectedProspect.surface_max || '',
+      budget_min: selectedProspect.budget_min || '',
+      budget_max: selectedProspect.budget_max || '',
+      priorites: selectedProspect.priorites || '',
+      date_suivi: selectedProspect.date_suivi || ''
+    })
+    setIsEditing(true)
+  }
+
+  const cancelEditing = () => {
+    setIsEditing(false)
+    setEditForm({})
+  }
+
+  const saveEditing = async () => {
+    try {
+      const updated = { ...selectedProspect, ...editForm }
+
+      if (!String(selectedProspect.id).startsWith('demo-')) {
+        const { error: err } = await createClient()
+          .from('prospects')
+          .update({
+            nom: editForm.nom,
+            email: editForm.email || null,
+            phone: editForm.phone || null,
+            budget: editForm.budget || null,
+            localisation: editForm.localisation || null,
+            type_bien: editForm.type_bien || null,
+            nombre_pieces: editForm.nombre_pieces || null,
+            surface_min: editForm.surface_min || null,
+            surface_max: editForm.surface_max || null,
+            budget_min: editForm.budget_min || null,
+            budget_max: editForm.budget_max || null,
+            priorites: editForm.priorites || null,
+            date_suivi: editForm.date_suivi || null,
+            updated_at: new Date()
+          })
+          .eq('id', selectedProspect.id)
+
+        if (err) throw err
+      }
+
+      setProspects(prospects.map(p => p.id === selectedProspect.id ? updated : p))
+      setSelectedProspect(updated)
+      setIsEditing(false)
+      setError('')
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
+  const filteredProspects = prospects.filter(p => p.nom.toLowerCase().includes(searchProspect.toLowerCase()))
+
   return (
     <div className="grid gap-8 sm:grid-cols-3">
       <div className="sm:col-span-1 space-y-6">
@@ -229,17 +366,42 @@ function CRMTab() {
             <input type="email" placeholder="Email" value={newContact.email} onChange={(e) => setNewContact({ ...newContact, email: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm" />
             <input type="tel" placeholder="Téléphone" value={newContact.phone} onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm" />
             <input type="text" placeholder="Budget" value={newContact.budget} onChange={(e) => setNewContact({ ...newContact, budget: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm" />
+
+            <p className="text-xs font-semibold text-slate-500 uppercase pt-2">Critères de recherche</p>
+            <input type="text" placeholder="Localisation" value={newContact.localisation} onChange={(e) => setNewContact({ ...newContact, localisation: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm" />
+            <input type="text" placeholder="Type de bien" value={newContact.type_bien} onChange={(e) => setNewContact({ ...newContact, type_bien: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm" />
+            <input type="text" placeholder="Nombre de pièces" value={newContact.nombre_pieces} onChange={(e) => setNewContact({ ...newContact, nombre_pieces: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm" />
+            <div className="grid grid-cols-2 gap-2">
+              <input type="number" placeholder="Surface min (m²)" value={newContact.surface_min} onChange={(e) => setNewContact({ ...newContact, surface_min: e.target.value })} className="w-full px-3 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm" />
+              <input type="number" placeholder="Surface max (m²)" value={newContact.surface_max} onChange={(e) => setNewContact({ ...newContact, surface_max: e.target.value })} className="w-full px-3 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm" />
+              <input type="text" placeholder="Budget min (CHF)" value={newContact.budget_min} onChange={(e) => setNewContact({ ...newContact, budget_min: e.target.value })} className="w-full px-3 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm" />
+              <input type="text" placeholder="Budget max (CHF)" value={newContact.budget_max} onChange={(e) => setNewContact({ ...newContact, budget_max: e.target.value })} className="w-full px-3 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm" />
+            </div>
+            <input type="text" placeholder="Priorités" value={newContact.priorites} onChange={(e) => setNewContact({ ...newContact, priorites: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm" />
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Date de suivi</label>
+              <input type="date" value={newContact.date_suivi} onChange={(e) => setNewContact({ ...newContact, date_suivi: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm" />
+            </div>
+
             <button onClick={addProspect} className="w-full px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition text-sm">+ Ajouter prospect</button>
           </div>
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold text-slate-950 mb-3">Mes prospects ({prospects.length})</h2>
+          <h2 className="text-lg font-semibold text-slate-950 mb-3">Mes prospects ({filteredProspects.length})</h2>
+          <div className="mb-3">
+            <input type="text" placeholder="Rechercher par nom..." value={searchProspect} onChange={(e) => setSearchProspect(e.target.value)} className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 text-sm" />
+          </div>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {loading ? <p className="text-sm text-slate-500">Chargement...</p> : prospects.length === 0 ? <p className="text-sm text-slate-500">Aucun prospect</p> : prospects.map((prospect) => (
+            {loading ? <p className="text-sm text-slate-500">Chargement...</p> : filteredProspects.length === 0 ? <p className="text-sm text-slate-500">Aucun prospect trouvé</p> : filteredProspects.map((prospect) => (
               <button key={prospect.id} onClick={() => setSelectedProspect(prospect)} className={`w-full text-left p-3 rounded-lg border transition ${selectedProspect?.id === prospect.id ? 'bg-indigo-100 border-indigo-300' : 'bg-white border-slate-200 hover:border-indigo-200'}`}>
-                <p className="font-medium text-sm text-slate-950">{prospect.nom}</p>
-                <p className="text-xs text-slate-500">{prospect.email}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm text-slate-950">{prospect.nom}</p>
+                    <p className="text-xs text-slate-500">{prospect.email}</p>
+                  </div>
+                  {prospect.favoris && <span className="text-lg">⭐</span>}
+                </div>
                 <span className={`inline-block mt-2 px-2 py-1 rounded text-xs font-semibold ${prospect.status === 'Actif' ? 'bg-green-100 text-green-700' : prospect.status === 'Intéressé' ? 'bg-blue-100 text-blue-700' : prospect.status === 'Visite' ? 'bg-purple-100 text-purple-700' : prospect.status === 'Achat' ? 'bg-emerald-100 text-emerald-700' : prospect.status === 'Fermé' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{prospect.status}</span>
               </button>
             ))}
@@ -250,24 +412,152 @@ function CRMTab() {
       <div className="sm:col-span-2">
         {selectedProspect ? (
           <div className="space-y-6">
+            <button onClick={() => setSelectedProspect(null)} className="text-indigo-600 hover:text-indigo-700 font-medium text-sm">← Retour</button>
+
             <div className="p-6 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-2xl font-semibold text-slate-950">{selectedProspect.nom}</h3>
-                  <p className="text-slate-600 mt-1">{selectedProspect.email || 'N/A'} • {selectedProspect.phone || 'N/A'}</p>
-                  <p className="text-slate-600 mt-2">Budget: {selectedProspect.budget || 'N/A'}</p>
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-2xl font-semibold text-slate-950">{selectedProspect.nom}</h3>
+                    <button onClick={() => setSelectedProspect({ ...selectedProspect, favoris: !selectedProspect.favoris })} className="text-2xl hover:scale-110 transition">
+                      {selectedProspect.favoris ? '⭐' : '☆'}
+                    </button>
+                  </div>
+                  {!isEditing && (
+                    <>
+                      <p className="text-slate-600 mt-1">{selectedProspect.email || 'N/A'} • {selectedProspect.phone || 'N/A'}</p>
+                      <p className="text-slate-600 mt-2">Budget: {selectedProspect.budget || 'N/A'}</p>
+                    </>
+                  )}
                 </div>
-                <button onClick={() => deleteProspect(selectedProspect.id)} className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">Supprimer</button>
+                <div className="flex gap-2">
+                  {!isEditing && (
+                    <button onClick={startEditing} className="px-3 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-medium">✎ Éditer</button>
+                  )}
+                  <button onClick={() => deleteProspect(selectedProspect.id)} className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition">Supprimer</button>
+                </div>
               </div>
 
-              <div className="mt-6">
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Statut</label>
-                <div className="flex flex-wrap gap-2">
-                  {statuses.map(status => (
-                    <button key={status} onClick={() => updateStatus(selectedProspect.id, status)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${selectedProspect.status === status ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>{status}</button>
-                  ))}
+              {isEditing ? (
+                <div className="border-t border-slate-200 pt-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Nom</label>
+                      <input type="text" value={editForm.nom} onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Email</label>
+                      <input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Téléphone</label>
+                      <input type="tel" value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Budget</label>
+                      <input type="text" value={editForm.budget} onChange={(e) => setEditForm({ ...editForm, budget: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    </div>
+                  </div>
+
+                  <p className="text-xs font-semibold text-slate-700 uppercase pt-2">📋 Critères recherche</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Localisation</label>
+                      <input type="text" value={editForm.localisation} onChange={(e) => setEditForm({ ...editForm, localisation: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Type de bien</label>
+                      <input type="text" value={editForm.type_bien} onChange={(e) => setEditForm({ ...editForm, type_bien: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Nombre de pièces</label>
+                      <input type="text" value={editForm.nombre_pieces} onChange={(e) => setEditForm({ ...editForm, nombre_pieces: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Priorités</label>
+                      <input type="text" value={editForm.priorites} onChange={(e) => setEditForm({ ...editForm, priorites: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Surface min (m²)</label>
+                      <input type="number" value={editForm.surface_min} onChange={(e) => setEditForm({ ...editForm, surface_min: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Surface max (m²)</label>
+                      <input type="number" value={editForm.surface_max} onChange={(e) => setEditForm({ ...editForm, surface_max: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Budget min (CHF)</label>
+                      <input type="text" value={editForm.budget_min} onChange={(e) => setEditForm({ ...editForm, budget_min: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">Budget max (CHF)</label>
+                      <input type="text" value={editForm.budget_max} onChange={(e) => setEditForm({ ...editForm, budget_max: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    </div>
+                  </div>
+
+                  <p className="text-xs font-semibold text-slate-700 uppercase pt-2">📅 Suivi</p>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">Date de suivi</label>
+                    <input type="date" value={editForm.date_suivi} onChange={(e) => setEditForm({ ...editForm, date_suivi: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button onClick={saveEditing} className="px-6 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition">Enregistrer</button>
+                    <button onClick={cancelEditing} className="px-6 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-semibold hover:bg-slate-200 transition">Annuler</button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="border-t border-slate-200 pt-6">
+                    <p className="text-xs font-semibold text-slate-700 uppercase mb-3">📋 CRITÈRES RECHERCHE</p>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-slate-500">Localisation</p>
+                        <p className="font-medium text-slate-950">{selectedProspect.localisation || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500">Type de bien</p>
+                        <p className="font-medium text-slate-950">{selectedProspect.type_bien || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500">Nombre de pièces</p>
+                        <p className="font-medium text-slate-950">{selectedProspect.nombre_pieces || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500">Surface (m²)</p>
+                        <p className="font-medium text-slate-950">{selectedProspect.surface_min || '—'} - {selectedProspect.surface_max || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500">Budget (CHF)</p>
+                        <p className="font-medium text-slate-950">{selectedProspect.budget_min || '—'} - {selectedProspect.budget_max || '—'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500">Priorités</p>
+                        <p className="font-medium text-slate-950">{selectedProspect.priorites || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-200 mt-6 pt-6">
+                    <p className="text-xs font-semibold text-slate-700 uppercase mb-3">📅 SUIVI</p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-slate-500">Date de suivi</p>
+                        <p className="font-medium text-slate-950">{selectedProspect.date_suivi ? new Date(selectedProspect.date_suivi).toLocaleDateString('fr-CH') : '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Statut</label>
+                    <div className="flex flex-wrap gap-2">
+                      {statuses.map(status => (
+                        <button key={status} onClick={() => updateStatus(selectedProspect.id, status)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${selectedProspect.status === status ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>{status}</button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="p-6 rounded-xl border border-slate-200 bg-white">
@@ -275,7 +565,7 @@ function CRMTab() {
               <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
                 {notes.length === 0 ? <p className="text-sm text-slate-500">Aucune note</p> : notes.map((note) => (
                   <div key={note.id} className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                    <p className="text-xs text-slate-500 mb-1">{new Date(note.created_at).toLocaleString('fr-CH')}</p>
+                    <p className="text-xs text-slate-500 mb-1">{parseUtcDate(note.created_at).toLocaleString('fr-CH')}</p>
                     <p className="text-sm text-slate-700">{note.note}</p>
                   </div>
                 ))}
@@ -825,6 +1115,9 @@ function ComparateurTab() {
   const [biens, setBiens] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [newBien, setNewBien] = useState({ adresse: '', prix: '', surface: '', localite: 'Lausanne', type: 'Appartement', statut: 'À vendre' })
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState('')
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
   const [filterLocalite, setFilterLocalite] = useState('')
 
@@ -855,6 +1148,15 @@ function ComparateurTab() {
     }
   }
 
+  const handleImageSelect = (file: File | null) => {
+    setImageFile(file)
+    if (file) {
+      setImagePreview(URL.createObjectURL(file))
+    } else {
+      setImagePreview('')
+    }
+  }
+
   const addBien = async () => {
     try {
       if (!newBien.adresse || !newBien.prix || !newBien.surface) {
@@ -865,6 +1167,29 @@ function ComparateurTab() {
       const { data: { user } } = await createClient().auth.getUser()
       if (!user) return
 
+      let imageUrl: string | null = null
+
+      if (imageFile) {
+        setUploading(true)
+        const ext = imageFile.name.split('.').pop()
+        const path = `${user.id}/${Date.now()}.${ext}`
+
+        const { error: uploadErr } = await createClient()
+          .storage
+          .from('biens-images')
+          .upload(path, imageFile)
+
+        if (uploadErr) throw uploadErr
+
+        const { data: publicData } = createClient()
+          .storage
+          .from('biens-images')
+          .getPublicUrl(path)
+
+        imageUrl = publicData.publicUrl
+        setUploading(false)
+      }
+
       const { error: err } = await createClient()
         .from('comparables')
         .insert([{
@@ -874,14 +1199,17 @@ function ComparateurTab() {
           surface: parseFloat(newBien.surface),
           localite: newBien.localite,
           type: newBien.type,
-          statut: newBien.statut
+          statut: newBien.statut,
+          image_url: imageUrl
         }])
 
       if (err) throw err
       setNewBien({ adresse: '', prix: '', surface: '', localite: 'Lausanne', type: 'Appartement', statut: 'À vendre' })
+      handleImageSelect(null)
       setError('')
       loadBiens()
     } catch (err: any) {
+      setUploading(false)
       setError(err.message)
     }
   }
@@ -924,7 +1252,21 @@ function ComparateurTab() {
             <option>Loué</option>
           </select>
         </div>
-        <button onClick={addBien} className="mt-4 px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition text-sm">+ Ajouter bien</button>
+
+        <div className="mt-3 flex items-center gap-4">
+          <label className="px-4 py-2 rounded-xl border border-dashed border-slate-300 text-sm text-slate-600 hover:border-indigo-400 hover:text-indigo-600 transition cursor-pointer">
+            📷 {imageFile ? imageFile.name : 'Ajouter une photo'}
+            <input type="file" accept="image/*" onChange={(e) => handleImageSelect(e.target.files?.[0] || null)} className="hidden" />
+          </label>
+          {imagePreview && (
+            <div className="flex items-center gap-2">
+              <img src={imagePreview} alt="Aperçu" className="w-14 h-14 object-cover rounded-lg border border-slate-200" />
+              <button onClick={() => handleImageSelect(null)} className="text-xs text-red-600 hover:bg-red-50 px-2 py-1 rounded transition">Retirer</button>
+            </div>
+          )}
+        </div>
+
+        <button onClick={addBien} disabled={uploading} className="mt-4 px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition text-sm disabled:opacity-50">{uploading ? 'Envoi de la photo...' : '+ Ajouter bien'}</button>
       </div>
 
       {biensFiltered.length > 0 && (
@@ -951,6 +1293,7 @@ function ComparateurTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200">
+                  <th className="text-left py-3 px-4 font-semibold text-slate-700">Photo</th>
                   <th className="text-left py-3 px-4 font-semibold text-slate-700">Adresse</th>
                   <th className="text-left py-3 px-4 font-semibold text-slate-700">Type</th>
                   <th className="text-right py-3 px-4 font-semibold text-slate-700">Prix</th>
@@ -964,6 +1307,13 @@ function ComparateurTab() {
               <tbody>
                 {biensFiltered.map((bien) => (
                   <tr key={bien.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="py-3 px-4">
+                      {bien.image_url ? (
+                        <img src={bien.image_url} alt={bien.adresse} className="w-12 h-12 object-cover rounded-lg border border-slate-200" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs">—</div>
+                      )}
+                    </td>
                     <td className="py-3 px-4 text-slate-950 font-medium">{bien.adresse}</td>
                     <td className="py-3 px-4 text-slate-700">{bien.type}</td>
                     <td className="text-right py-3 px-4 font-medium">{bien.prix.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</td>
