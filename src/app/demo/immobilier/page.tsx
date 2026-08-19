@@ -930,76 +930,178 @@ function GeneratorTab() {
   const [propertyType, setPropertyType] = useState('Appartement')
   const [rooms, setRooms] = useState('3')
   const [location, setLocation] = useState('Lausanne')
-  const [showText, setShowText] = useState(false)
+  const [surface, setSurface] = useState('')
+  const [prix, setPrix] = useState('')
+  const [atouts, setAtouts] = useState('')
+  const [ton, setTon] = useState<'accrocheur' | 'factuel' | 'luxe'>('accrocheur')
+  const [generatedText, setGeneratedText] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
 
-  const generatedText = `Magnifique ${propertyType.toLowerCase()} de ${rooms} pièces à ${location}. Spacieux, lumineux et bien agencé. Situé dans un quartier prisé avec tous les commerces à proximité. Idéal pour une famille ou un investisseur. Ne manquez pas cette opportunité!`
+  const tons = [
+    { id: 'accrocheur', label: 'Accrocheur' },
+    { id: 'factuel', label: 'Factuel' },
+    { id: 'luxe', label: 'Haut de gamme' },
+  ]
+
+  const generateDescription = async () => {
+    if (!propertyType || !location) {
+      setError('Type de bien et localité requis')
+      return
+    }
+    try {
+      setLoading(true)
+      setError('')
+      setCopied(false)
+
+      const res = await fetch('/api/generate-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: propertyType, pieces: rooms, localisation: location, surface, prix, atouts, ton }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de la génération')
+
+      setGeneratedText(data.description)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const copyText = () => {
+    navigator.clipboard.writeText(generatedText)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
-    <div className="max-w-2xl space-y-8">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-950 mb-6">Générateur de description (IA)</h2>
-        <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Type de propriété</label>
-              <select
-                value={propertyType}
-                onChange={(e) => setPropertyType(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
-              >
-                <option>Appartement</option>
-                <option>Maison</option>
-                <option>Villa</option>
-                <option>Studio</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Nombre de pièces</label>
-              <input
-                type="number"
-                value={rooms}
-                onChange={(e) => setRooms(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
-              />
-            </div>
+    <div className="max-w-2xl space-y-6">
+      <div className="p-6 rounded-xl border border-slate-200 bg-white space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Sparkles size={18} className="text-indigo-600" strokeWidth={2} />
+          <h2 className="text-base font-semibold text-slate-950">Générateur de description (IA)</h2>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Type de propriété</label>
+            <select
+              value={propertyType}
+              onChange={(e) => setPropertyType(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
+            >
+              <option>Appartement</option>
+              <option>Maison</option>
+              <option>Villa</option>
+              <option>Studio</option>
+              <option>Duplex</option>
+              <option>Penthouse</option>
+              <option>Chalet</option>
+            </select>
           </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Nombre de pièces</label>
+            <input
+              type="text"
+              value={rooms}
+              onChange={(e) => setRooms(e.target.value)}
+              placeholder="3.5"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">Localité</label>
             <input
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="Lausanne, Genève, Zurich..."
+              placeholder="Lausanne"
               className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
             />
           </div>
-          <button
-            onClick={() => setShowText(true)}
-            className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold hover:shadow-lg transition flex items-center justify-center gap-2"
-          >
-            <Sparkles size={18} />
-            Générer description
-          </button>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Surface (m²)</label>
+            <input
+              type="number"
+              value={surface}
+              onChange={(e) => setSurface(e.target.value)}
+              placeholder="120"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Prix (CHF)</label>
+            <input
+              type="number"
+              value={prix}
+              onChange={(e) => setPrix(e.target.value)}
+              placeholder="850000"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
+            />
+          </div>
         </div>
 
-        {showText && (
-          <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50">
-            <div className="flex items-start justify-between mb-3">
-              <p className="text-sm font-semibold text-slate-700">Description générée:</p>
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">Points forts</label>
+          <input
+            type="text"
+            value={atouts}
+            onChange={(e) => setAtouts(e.target.value)}
+            placeholder="Vue lac, balcon, rénové en 2023, proche gare..."
+            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">Ton</label>
+          <div className="flex gap-2">
+            {tons.map(t => (
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(generatedText)
-                  alert('✅ Copié!')
-                }}
-                className="text-sm px-3 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition font-medium"
+                key={t.id}
+                onClick={() => setTon(t.id as any)}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${ton === t.id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
               >
-                Copier
+                {t.label}
               </button>
-            </div>
-            <p className="text-slate-700 leading-relaxed">{generatedText}</p>
+            ))}
           </div>
+        </div>
+
+        <button
+          onClick={generateDescription}
+          disabled={loading}
+          className="w-full px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          <Sparkles size={18} />
+          {loading ? 'Génération en cours...' : 'Générer description'}
+        </button>
+
+        {error && (
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{error}</div>
         )}
       </div>
+
+      {generatedText && (
+        <div className="p-6 rounded-xl border border-indigo-200 bg-indigo-50/50">
+          <div className="flex items-start justify-between mb-3">
+            <p className="text-sm font-semibold text-slate-700">Description générée</p>
+            <button
+              onClick={copyText}
+              className="text-sm px-3 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition font-medium"
+            >
+              {copied ? 'Copié' : 'Copier'}
+            </button>
+          </div>
+          <p className="text-slate-700 leading-relaxed">{generatedText}</p>
+        </div>
+      )}
     </div>
   )
 }
