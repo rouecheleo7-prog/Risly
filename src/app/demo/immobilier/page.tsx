@@ -9,14 +9,12 @@ function parseUtcDate(value: string) {
 }
 
 export default function ImmobilierDemo() {
-  const [activeTab, setActiveTab] = useState<'crm' | 'calculator' | 'generator' | 'estimateur' | 'comparateur' | 'visites' | 'templates' | 'notes'>('crm')
+  const [activeTab, setActiveTab] = useState<'crm' | 'prix' | 'generator' | 'visites' | 'templates' | 'notes'>('crm')
 
   const tabs = [
     { id: 'crm', label: 'CRM & Prospects', icon: Users },
-    { id: 'calculator', label: 'Calculateurs', icon: Calculator },
+    { id: 'prix', label: 'Outils Prix', icon: Calculator },
     { id: 'generator', label: 'Générateur IA', icon: Sparkles },
-    { id: 'estimateur', label: 'Estimateur Prix', icon: FileText },
-    { id: 'comparateur', label: 'Comparateur', icon: FileText },
     { id: 'visites', label: 'Calendrier Visites', icon: FileText },
     { id: 'templates', label: 'Templates', icon: FileText },
     { id: 'notes', label: 'Notes', icon: FileText },
@@ -65,10 +63,8 @@ export default function ImmobilierDemo() {
           {/* Content */}
           <div className="bg-white rounded-2xl border border-slate-200/70 p-8 shadow-sm">
             {activeTab === 'crm' && <CRMTab />}
-            {activeTab === 'calculator' && <CalculatorTab />}
+            {activeTab === 'prix' && <OutilsPrixTab />}
             {activeTab === 'generator' && <GeneratorTab />}
-            {activeTab === 'estimateur' && <EstimateurTab />}
-            {activeTab === 'comparateur' && <ComparateurTab />}
             {activeTab === 'visites' && <VisitesTab />}
             {activeTab === 'templates' && <TemplatesTab />}
             {activeTab === 'notes' && <NotesTab />}
@@ -679,6 +675,41 @@ function CRMTab() {
       {error && (
         <div className="sm:col-span-3 p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{error}</div>
       )}
+    </div>
+  )
+}
+
+// ─── OUTILS PRIX (regroupe Estimateur, Calculateurs, Comparateur) ───
+function OutilsPrixTab() {
+  const [subTab, setSubTab] = useState<'estimateur' | 'calculateurs' | 'comparateur'>('estimateur')
+
+  const subTabs = [
+    { id: 'estimateur', label: 'Estimateur' },
+    { id: 'calculateurs', label: 'Calculateurs' },
+    { id: 'comparateur', label: 'Comparateur' },
+  ]
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-8 border-b border-slate-200">
+        {subTabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setSubTab(tab.id as any)}
+            className={`px-4 py-3 text-sm font-semibold transition border-b-2 -mb-px ${
+              subTab === tab.id
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {subTab === 'estimateur' && <EstimateurTab />}
+      {subTab === 'calculateurs' && <CalculatorTab />}
+      {subTab === 'comparateur' && <ComparateurTab />}
     </div>
   )
 }
