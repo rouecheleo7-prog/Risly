@@ -935,7 +935,6 @@ function GeneratorTab() {
   const [atouts, setAtouts] = useState('')
   const [ton, setTon] = useState<'accrocheur' | 'factuel' | 'luxe'>('accrocheur')
   const [generatedText, setGeneratedText] = useState('')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
 
@@ -945,31 +944,51 @@ function GeneratorTab() {
     { id: 'luxe', label: 'Haut de gamme' },
   ]
 
-  const generateDescription = async () => {
+  const buildDescription = () => {
+    const typeLabel = propertyType.toLowerCase()
+    const demonstratif = /^[aeiouéèêh]/.test(typeLabel) ? 'Cet' : 'Ce'
+    const piecesTxt = rooms ? `${rooms} pièces` : ''
+    const surfaceTxt = surface ? `${surface} m²` : ''
+    const prixTxt = prix ? Number(prix).toLocaleString('fr-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }) : ''
+    const atoutsList = atouts.split(',').map(a => a.trim()).filter(Boolean)
+    const atoutsTxt = atoutsList.length > 0 ? atoutsList.join(', ') : ''
+
+    const caracteristiques = [piecesTxt, surfaceTxt].filter(Boolean).join(' de ')
+
+    if (ton === 'luxe') {
+      return [
+        `Un ${typeLabel} d'exception à ${location}${caracteristiques ? `, ${caracteristiques}` : ''}.`,
+        atoutsTxt ? `Cette propriété se distingue par ${atoutsTxt}.` : '',
+        `Un cadre rare, pensé pour les acquéreurs les plus exigeants.`,
+        prixTxt ? `Prix sur demande : ${prixTxt}.` : '',
+      ].filter(Boolean).join(' ')
+    }
+
+    if (ton === 'factuel') {
+      return [
+        `${propertyType} à ${location}${caracteristiques ? `, ${caracteristiques}` : ''}.`,
+        atoutsTxt ? `Caractéristiques : ${atoutsTxt}.` : '',
+        prixTxt ? `Prix : ${prixTxt}.` : '',
+        `Visite sur demande.`,
+      ].filter(Boolean).join(' ')
+    }
+
+    return [
+      `Coup de cœur à ${location} ! ${demonstratif} ${typeLabel}${caracteristiques ? ` de ${caracteristiques}` : ''} n'attend que vous.`,
+      atoutsTxt ? `Profitez de ${atoutsTxt}.` : '',
+      `Idéal pour une famille ou un investisseur, ne manquez pas cette opportunité.`,
+      prixTxt ? `Disponible à ${prixTxt}.` : '',
+    ].filter(Boolean).join(' ')
+  }
+
+  const generateDescription = () => {
     if (!propertyType || !location) {
       setError('Type de bien et localité requis')
       return
     }
-    try {
-      setLoading(true)
-      setError('')
-      setCopied(false)
-
-      const res = await fetch('/api/generate-description', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: propertyType, pieces: rooms, localisation: location, surface, prix, atouts, ton }),
-      })
-
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur lors de la génération')
-
-      setGeneratedText(data.description)
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    setError('')
+    setCopied(false)
+    setGeneratedText(buildDescription())
   }
 
   const copyText = () => {
@@ -1076,11 +1095,10 @@ function GeneratorTab() {
 
         <button
           onClick={generateDescription}
-          disabled={loading}
-          className="w-full px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
         >
           <Sparkles size={18} />
-          {loading ? 'Génération en cours...' : 'Générer description'}
+          Générer description
         </button>
 
         {error && (
