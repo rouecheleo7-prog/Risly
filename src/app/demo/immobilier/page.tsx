@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Home, Users, Calculator, Sparkles, FileText, CheckCircle2 } from 'lucide-react'
+import { Home, Users, Calculator, Sparkles, FileText, CheckCircle2, TrendingUp, Receipt, Wallet, Landmark, ChevronDown, X, Settings2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 function parseUtcDate(value: string) {
@@ -686,26 +686,31 @@ function OutilsPrixTab() {
   const [subTab, setSubTab] = useState<'estimateur' | 'calculateurs'>('estimateur')
 
   const subTabs = [
-    { id: 'estimateur', label: 'Estimateur' },
-    { id: 'calculateurs', label: 'Calculateurs' },
+    { id: 'estimateur', label: 'Estimateur', icon: TrendingUp },
+    { id: 'calculateurs', label: 'Calculateurs', icon: Calculator },
   ]
 
   return (
     <div>
-      <div className="flex gap-2 mb-8 border-b border-slate-200">
-        {subTabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setSubTab(tab.id as any)}
-            className={`px-4 py-3 text-sm font-semibold transition border-b-2 -mb-px ${
-              subTab === tab.id
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="inline-flex gap-1 p-1 mb-8 rounded-xl bg-slate-100">
+        {subTabs.map(tab => {
+          const Icon = tab.icon
+          const isActive = subTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setSubTab(tab.id as any)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition ${
+                isActive
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Icon size={16} strokeWidth={2} />
+              {tab.label}
+            </button>
+          )
+        })}
       </div>
 
       {subTab === 'estimateur' && <EstimateurTab />}
@@ -746,7 +751,7 @@ function CalculatorTab() {
   const mensualite = principal * (taux * Math.pow(1 + taux, mois)) / (Math.pow(1 + taux, mois) - 1)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <style>{`
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
@@ -757,148 +762,163 @@ function CalculatorTab() {
           -moz-appearance: textfield;
         }
       `}</style>
-      {/* ─── Frais Notaire ─── */}
-      <div className="p-6 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white">
-        <h3 className="text-lg font-semibold text-slate-950 mb-4">📋 Frais de Notaire</h3>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Prix d'achat</label>
-            <div className="relative">
-              <input
-                type="number"
-                placeholder="500000"
-                value={priceAchat}
-                onChange={(e) => setPriceAchat(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">CHF</span>
-            </div>
-          </div>
-          {price > 0 && (
-            <div className="mt-4 p-4 rounded-lg bg-green-50 border border-green-200">
-              <p className="text-slate-700 font-medium">Frais notaire:</p>
-              <p className="text-2xl font-bold text-green-600 mt-1">{fraisNotaireCHF.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</p>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* ─── Rendement Locatif ─── */}
-      <div className="p-6 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white">
-        <h3 className="text-lg font-semibold text-slate-950 mb-4">💰 Rendement Locatif (ROI)</h3>
-        <div className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Loyer mensuel (CHF)</label>
-              <input
-                type="number"
-                placeholder="3500"
-                value={loyer}
-                onChange={(e) => setLoyer(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Prix achat (CHF)</label>
-              <input
-                type="number"
-                placeholder="500000"
-                value={priceAchat}
-                onChange={(e) => setPriceAchat(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
-              />
-            </div>
+      <div className="grid gap-6 sm:grid-cols-2">
+        {/* ─── Frais Notaire ─── */}
+        <div className="p-6 rounded-xl border border-slate-200 bg-white">
+          <div className="flex items-center gap-2 mb-4">
+            <Receipt size={18} className="text-indigo-600" strokeWidth={2} />
+            <h3 className="text-base font-semibold text-slate-950">Frais de notaire</h3>
           </div>
-          {price > 0 && loyer && (
-            <div className="mt-4 p-4 rounded-lg bg-blue-50 border border-blue-200">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-slate-700 font-medium">Rendement annuel:</span>
-                <span className="text-xl font-bold text-blue-600">{rendementLocatif.toFixed(2)}%</span>
-              </div>
-              <p className="text-xs text-slate-600 mt-2">Loyer annuel: {loyerAnnuel.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ─── Coût Total Acquisition ─── */}
-      <div className="p-6 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white">
-        <h3 className="text-lg font-semibold text-slate-950 mb-4">🏠 Coût Total d'Acquisition</h3>
-        <div className="space-y-3">
-          <p className="text-sm text-slate-600">Inclut: Prix + Notaire + Frais bancaires + Assurance</p>
-          {price > 0 && (
-            <div className="space-y-2 p-4 rounded-lg bg-purple-50 border border-purple-200">
-              <div className="flex justify-between text-sm">
-                <span>Prix achat:</span>
-                <span className="font-semibold">{price.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Frais notaire:</span>
-                <span className="font-semibold">{fraisNotaireCHF.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Frais bancaires:</span>
-                <span className="font-semibold">{fraisBancaires.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</span>
-              </div>
-              <div className="flex justify-between text-sm border-t border-purple-200 pt-2 mt-2">
-                <span className="font-bold">TOTAL CHF:</span>
-                <span className="text-lg font-bold text-purple-600">{coutTotal.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="font-bold">TOTAL EUR:</span>
-                <span className="text-lg font-bold text-purple-600">{coutTotalEUR.toLocaleString('fr-CH', { style: 'currency', currency: 'EUR' })}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ─── Mensualité Hypothèque ─── */}
-      <div className="p-6 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white">
-        <h3 className="text-lg font-semibold text-slate-950 mb-4">📊 Mensualité Hypothèque</h3>
-        <div className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="space-y-3">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Montant emprunté</label>
-              <input
-                type="number"
-                placeholder="50000"
-                value={montantMenages}
-                onChange={(e) => setMontantMenages(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm"
-              />
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Prix d'achat</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  placeholder="500000"
+                  value={priceAchat}
+                  onChange={(e) => setPriceAchat(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">CHF</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Taux annuel (%)</label>
-              <input
-                type="number"
-                step="0.1"
-                placeholder="3.5"
-                value={tauxInteret}
-                onChange={(e) => setTauxInteret(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Durée (ans)</label>
-              <input
-                type="number"
-                placeholder="25"
-                value={dureePret}
-                onChange={(e) => setDureePret(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm"
-              />
-            </div>
+            {price > 0 && (
+              <div className="mt-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
+                <p className="text-sm text-slate-600">Frais notaire estimés</p>
+                <p className="text-2xl font-bold text-indigo-600 mt-1">{fraisNotaireCHF.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</p>
+              </div>
+            )}
           </div>
-          {principal > 0 && (
-            <div className="mt-4 p-4 rounded-lg bg-orange-50 border border-orange-200">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-slate-700 font-medium">Mensualité:</span>
-                <span className="text-2xl font-bold text-orange-600">{mensualite.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</span>
+        </div>
+
+        {/* ─── Rendement Locatif ─── */}
+        <div className="p-6 rounded-xl border border-slate-200 bg-white">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp size={18} className="text-indigo-600" strokeWidth={2} />
+            <h3 className="text-base font-semibold text-slate-950">Rendement locatif</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Loyer mensuel (CHF)</label>
+                <input
+                  type="number"
+                  placeholder="3500"
+                  value={loyer}
+                  onChange={(e) => setLoyer(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
+                />
               </div>
-              <p className="text-xs text-slate-600 mt-2">Pour {dureePret} ans à {tauxInteret}%</p>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Prix achat (CHF)</label>
+                <input
+                  type="number"
+                  placeholder="500000"
+                  value={priceAchat}
+                  onChange={(e) => setPriceAchat(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
+                />
+              </div>
             </div>
-          )}
+            {price > 0 && loyer && (
+              <div className="mt-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600">Rendement annuel</span>
+                  <span className="text-xl font-bold text-indigo-600">{rendementLocatif.toFixed(2)}%</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-2">Loyer annuel : {loyerAnnuel.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ─── Coût Total Acquisition ─── */}
+        <div className="p-6 rounded-xl border border-slate-200 bg-white">
+          <div className="flex items-center gap-2 mb-4">
+            <Wallet size={18} className="text-indigo-600" strokeWidth={2} />
+            <h3 className="text-base font-semibold text-slate-950">Coût total d'acquisition</h3>
+          </div>
+          <div className="space-y-3">
+            <p className="text-sm text-slate-500">Prix + notaire + frais bancaires + assurance</p>
+            {price > 0 && (
+              <div className="space-y-2 p-4 rounded-lg bg-slate-50 border border-slate-200">
+                <div className="flex justify-between text-sm text-slate-600">
+                  <span>Prix achat</span>
+                  <span className="font-semibold text-slate-950">{price.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</span>
+                </div>
+                <div className="flex justify-between text-sm text-slate-600">
+                  <span>Frais notaire</span>
+                  <span className="font-semibold text-slate-950">{fraisNotaireCHF.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</span>
+                </div>
+                <div className="flex justify-between text-sm text-slate-600">
+                  <span>Frais bancaires</span>
+                  <span className="font-semibold text-slate-950">{fraisBancaires.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</span>
+                </div>
+                <div className="flex justify-between text-sm border-t border-slate-200 pt-2 mt-2">
+                  <span className="font-semibold text-slate-700">Total CHF</span>
+                  <span className="text-lg font-bold text-indigo-600">{coutTotal.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="font-semibold text-slate-700">Total EUR</span>
+                  <span className="text-lg font-bold text-indigo-600">{coutTotalEUR.toLocaleString('fr-CH', { style: 'currency', currency: 'EUR' })}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ─── Mensualité Hypothèque ─── */}
+        <div className="p-6 rounded-xl border border-slate-200 bg-white">
+          <div className="flex items-center gap-2 mb-4">
+            <Landmark size={18} className="text-indigo-600" strokeWidth={2} />
+            <h3 className="text-base font-semibold text-slate-950">Mensualité hypothèque</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Montant emprunté</label>
+                <input
+                  type="number"
+                  placeholder="50000"
+                  value={montantMenages}
+                  onChange={(e) => setMontantMenages(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Taux annuel (%)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="3.5"
+                  value={tauxInteret}
+                  onChange={(e) => setTauxInteret(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Durée (ans)</label>
+                <input
+                  type="number"
+                  placeholder="25"
+                  value={dureePret}
+                  onChange={(e) => setDureePret(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition text-sm"
+                />
+              </div>
+            </div>
+            {principal > 0 && (
+              <div className="mt-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-slate-600">Mensualité</span>
+                  <span className="text-2xl font-bold text-indigo-600">{mensualite.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-2">Pour {dureePret} ans à {tauxInteret}%</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -1059,7 +1079,7 @@ function EstimateurTab() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <style>{`
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
@@ -1068,135 +1088,140 @@ function EstimateurTab() {
         }
       `}</style>
 
-      {/* ─── CALCULER L'ESTIMATION ─── */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Type</label>
-          <select value={type} onChange={(e) => setType(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40">
-            <option>Appartement</option>
-            <option>Maison</option>
-            <option>Villa</option>
-            <option>Studio</option>
-            <option>Duplex</option>
-            <option>Penthouse</option>
-            <option>Chalet</option>
-          </select>
+      <div className="p-6 rounded-xl border border-slate-200 bg-white space-y-5">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Type</label>
+            <select value={type} onChange={(e) => setType(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40">
+              <option>Appartement</option>
+              <option>Maison</option>
+              <option>Villa</option>
+              <option>Studio</option>
+              <option>Duplex</option>
+              <option>Penthouse</option>
+              <option>Chalet</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Surface (m²)</label>
+            <input type="number" value={surface} onChange={(e) => setSurface(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Pièces</label>
+            <select value={pieces} onChange={(e) => setPieces(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40">
+              {Object.keys(piecesCoef).map(p => (
+                <option key={p}>{p}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Surface (m²)</label>
-          <input type="number" value={surface} onChange={(e) => setSurface(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40" />
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Pièces</label>
-          <select value={pieces} onChange={(e) => setPieces(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40">
-            {Object.keys(piecesCoef).map(p => (
-              <option key={p}>{p}</option>
-            ))}
-          </select>
-        </div>
-      </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Localité</label>
-          <select value={localite} onChange={(e) => setLocalite(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40">
-            {Object.keys(prixM2).map(city => (
-              <option key={city}>{city}</option>
-            ))}
-          </select>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Localité</label>
+            <select value={localite} onChange={(e) => setLocalite(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40">
+              {Object.keys(prixM2).map(city => (
+                <option key={city}>{city}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">État</label>
+            <select value={etat} onChange={(e) => setEtat(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40">
+              {Object.keys(etatCoef).map(e => (
+                <option key={e}>{e}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Année</label>
+            <input type="number" value={annee} onChange={(e) => setAnnee(e.target.value)} min="1800" max={new Date().getFullYear()} className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40" />
+          </div>
         </div>
-        <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">État</label>
-          <select value={etat} onChange={(e) => setEtat(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40">
-            {Object.keys(etatCoef).map(e => (
-              <option key={e}>{e}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Année</label>
-          <input type="number" value={annee} onChange={(e) => setAnnee(e.target.value)} min="1800" max={new Date().getFullYear()} className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40" />
-        </div>
-      </div>
 
-      <div>
-        <label className="block text-xs font-bold text-slate-700 mb-2 uppercase">Ajustement</label>
-        <div className="flex gap-2">
-          {[-20, -10, 0, 10, 20].map(val => (
-            <button key={val} onClick={() => setAjustement(val)} className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${ajustement === val ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
-              {val === 0 ? 'Reset' : (val > 0 ? '+' : '') + val + '%'}
-            </button>
-          ))}
+        <div>
+          <label className="block text-xs font-bold text-slate-700 mb-2 uppercase">Ajustement</label>
+          <div className="flex gap-2">
+            {[-20, -10, 0, 10, 20].map(val => (
+              <button key={val} onClick={() => setAjustement(val)} className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${ajustement === val ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+                {val === 0 ? 'Reset' : (val > 0 ? '+' : '') + val + '%'}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* ─── RÉSULTAT ─── */}
-      {estimation > 0 && (
-        <div className="p-6 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white">
-          <p className="text-sm opacity-90 mb-2">💰 ESTIMATION</p>
-          <p className="text-5xl font-bold">{estimation.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</p>
-          <p className="text-sm opacity-90 mt-2">Prix/m²: {(estimation / parseFloat(surface)).toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</p>
-        </div>
-      )}
+        {/* ─── RÉSULTAT ─── */}
+        {estimation > 0 && (
+          <div className="p-6 rounded-xl bg-indigo-600 text-white">
+            <div className="flex items-center gap-2 text-sm opacity-90 mb-2">
+              <TrendingUp size={16} strokeWidth={2} />
+              <span className="font-semibold uppercase tracking-wide">Estimation</span>
+            </div>
+            <p className="text-5xl font-bold">{estimation.toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</p>
+            <p className="text-sm opacity-80 mt-2">Prix/m² : {(estimation / parseFloat(surface)).toLocaleString('fr-CH', { style: 'currency', currency: 'CHF' })}</p>
+          </div>
+        )}
+      </div>
 
       {/* ─── CONFIG COEFFICIENTS ─── */}
-      <div className="border-t pt-4">
+      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
         <button
           onClick={() => setShowConfig(!showConfig)}
-          className="text-sm font-bold text-indigo-600 hover:text-indigo-700 uppercase transition"
+          className="w-full flex items-center justify-between px-6 py-4 text-left"
         >
-          ⚙️ {showConfig ? 'Masquer' : 'Afficher'} mes coefficients (T1,T2,T3,État,Année)
+          <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <Settings2 size={16} className="text-slate-500" strokeWidth={2} />
+            Mes coefficients (pièces, état)
+          </span>
+          <ChevronDown size={16} className={`text-slate-400 transition-transform ${showConfig ? 'rotate-180' : ''}`} strokeWidth={2} />
         </button>
 
         {showConfig && (
-          <div className="mt-4 space-y-4">
-            {/* Coefficients Pièces */}
-            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
-              <p className="text-xs font-bold text-blue-900 mb-3 uppercase">Coefficients par pièces</p>
+          <div className="px-6 pb-6 space-y-5 border-t border-slate-100 pt-5">
+            <div>
+              <p className="text-xs font-bold text-slate-500 mb-3 uppercase">Coefficients par pièces</p>
               <div className="grid gap-2 sm:grid-cols-4">
                 {Object.entries(piecesCoef).map(([piece, coef]) => (
                   <div key={piece}>
-                    <label className="block text-xs text-slate-700 mb-1 font-semibold">{piece}</label>
+                    <label className="block text-xs text-slate-500 mb-1 font-semibold">{piece}</label>
                     <input
                       type="number"
                       step="0.05"
                       value={coef}
                       onChange={(e) => updatePiecesCoef(piece, e.target.value)}
-                      className="w-full px-2 py-1.5 rounded border border-blue-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40"
+                      className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40"
                     />
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Coefficients État */}
-            <div className="p-3 rounded-lg bg-green-50 border border-green-200">
-              <p className="text-xs font-bold text-green-900 mb-3 uppercase">Coefficients par état</p>
+            <div>
+              <p className="text-xs font-bold text-slate-500 mb-3 uppercase">Coefficients par état</p>
               <div className="grid gap-2 sm:grid-cols-5">
                 {Object.entries(etatCoef).map(([etatVal, coef]) => (
                   <div key={etatVal}>
-                    <label className="block text-xs text-slate-700 mb-1 font-semibold">{etatVal}</label>
+                    <label className="block text-xs text-slate-500 mb-1 font-semibold">{etatVal}</label>
                     <input
                       type="number"
                       step="0.05"
                       value={coef}
                       onChange={(e) => updateEtatCoef(etatVal, e.target.value)}
-                      className="w-full px-2 py-1.5 rounded border border-green-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40"
+                      className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40"
                     />
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Note */}
-            <p className="text-xs text-slate-500">💡 1.0 = pas de changement | 1.2 = +20% | 0.8 = -20%</p>
+            <p className="text-xs text-slate-500">1.0 = pas de changement, 1.2 = +20%, 0.8 = -20%</p>
           </div>
         )}
       </div>
 
       {/* ─── MES TARIFS/M² ─── */}
-      <div className="border-t pt-4">
-        <label className="block text-xs font-bold text-slate-700 mb-3 uppercase">Mes tarifs/m² par région</label>
+      <div className="p-6 rounded-xl border border-slate-200 bg-white">
+        <p className="text-xs font-bold text-slate-500 mb-3 uppercase">Mes tarifs/m² par région</p>
         <div className="space-y-2">
           {Object.entries(prixM2).map(([city, price]) => (
             <div key={city} className="flex items-center gap-2">
@@ -1208,10 +1233,12 @@ function EstimateurTab() {
                 className="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-600/40"
               />
               <span className="w-12 text-xs text-slate-500 text-right">CHF</span>
-              <button onClick={() => deleteTarif(city)} className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition font-bold">✕</button>
+              <button onClick={() => deleteTarif(city)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                <X size={14} strokeWidth={2} />
+              </button>
             </div>
           ))}
-          <div className="flex gap-2 mt-3 pt-3 border-t">
+          <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
             <input
               type="text"
               placeholder="Localité"
