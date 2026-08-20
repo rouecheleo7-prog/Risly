@@ -4,7 +4,14 @@ import { cookies } from 'next/headers'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const { email, password, adminSecret } = await request.json()
+
+    if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
+      return NextResponse.json(
+        { error: 'Code admin incorrect' },
+        { status: 401 }
+      )
+    }
 
     if (!email || !password) {
       return NextResponse.json(

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Eye, EyeOff, Plus, Check, X } from 'lucide-react'
 
 export default function CreateUserPage() {
+  const [adminSecret, setAdminSecret] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -15,6 +16,12 @@ export default function CreateUserPage() {
     e.preventDefault()
     setLoading(true)
     setMessage(null)
+
+    if (!adminSecret) {
+      setMessage({ type: 'error', text: 'Code admin requis' })
+      setLoading(false)
+      return
+    }
 
     if (!email || !password) {
       setMessage({ type: 'error', text: 'Email et mot de passe requis' })
@@ -32,7 +39,7 @@ export default function CreateUserPage() {
       const response = await fetch('/api/admin/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, adminSecret }),
       })
 
       const data = await response.json()
@@ -81,6 +88,19 @@ export default function CreateUserPage() {
 
         {/* Form */}
         <form onSubmit={handleCreateUser} className="space-y-5">
+          <div className="space-y-2">
+            <label htmlFor="adminSecret" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Code admin</label>
+            <input
+              id="adminSecret"
+              type="password"
+              placeholder="Code secret"
+              value={adminSecret}
+              onChange={(e) => setAdminSecret(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-950 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition"
+              required
+            />
+          </div>
+
           <div className="space-y-2">
             <label htmlFor="email" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Email</label>
             <input
