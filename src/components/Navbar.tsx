@@ -27,10 +27,11 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           <Link
             href="/auth/login"
-            className="group inline-flex items-center gap-1.5 rounded-full border border-slate-950/10 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_1px_0_0_rgba(255,255,255,0.08)_inset] transition hover:bg-slate-800"
+            className="group inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-slate-950/10 bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_1px_0_0_rgba(255,255,255,0.08)_inset] transition hover:bg-slate-800"
           >
-            <Lock className="h-3.5 w-3.5 text-indigo-400 transition group-hover:text-indigo-300" strokeWidth={2} />
-            <span className="hidden sm:inline">Risly</span>Pro
+            <Lock className="h-4 w-4 flex-shrink-0 text-indigo-400 transition group-hover:text-indigo-300" strokeWidth={2} />
+            <span className="text-slate-300">Risly</span>
+            <span className="text-white">Pro</span>
           </Link>
           <Link
             href={`${WA}?text=${encodeURIComponent('Bonjour Risly 👋 Je souhaite recevoir une maquette gratuite pour mon projet.')}`}
