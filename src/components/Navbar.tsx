@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { motion, useScroll, useTransform } from 'framer-motion'
+import { Lock } from 'lucide-react'
 
 const WA = 'https://wa.me/41779021764'
 
@@ -23,14 +24,23 @@ export default function Navbar() {
           <a href="#faq" className="transition hover:text-slate-900">FAQ</a>
           <a href="#apropos" className="transition hover:text-slate-900">À propos</a>
         </nav>
-        <Link
-          href={`${WA}?text=${encodeURIComponent('Bonjour Risly 👋 Je souhaite recevoir une maquette gratuite pour mon projet.')}`}
-          className="inline-flex items-center rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200/40 transition hover:bg-indigo-700"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Maquette gratuite
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/auth/login"
+            className="group inline-flex items-center gap-1.5 rounded-full border border-slate-950/10 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_1px_0_0_rgba(255,255,255,0.08)_inset] transition hover:bg-slate-800"
+          >
+            <Lock className="h-3.5 w-3.5 text-indigo-400 transition group-hover:text-indigo-300" strokeWidth={2} />
+            <span className="hidden sm:inline">Risly</span>Pro
+          </Link>
+          <Link
+            href={`${WA}?text=${encodeURIComponent('Bonjour Risly 👋 Je souhaite recevoir une maquette gratuite pour mon projet.')}`}
+            className="inline-flex items-center rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200/40 transition hover:bg-indigo-700"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Maquette gratuite
+          </Link>
+        </div>
       </div>
     </header>
   )
